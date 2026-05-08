@@ -1,33 +1,93 @@
-<table border="1" cellPadding="8" style={{ marginTop: "20px", borderCollapse: "collapse" }}>
-  <thead>
-    <tr>
-      <th>Mitarbeiter</th>
-      <th>Fahrzeug</th>
-      <th>Start</th>
-      <th>Ende</th>
-      <th>Status</th>
-    </tr>
-  </thead>
+import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 
-  <tbody>
-    {zeiten.map((z) => (
-      <tr key={z.id}>
-        <td>{z.mitarbeiter}</td>
+const supabase = createClient(
+  "https://rbhbijcxbemebynfrpiz.supabase.co",
+  "sb_publishable_URHTzamjcI6_j1dt0uTTlQ_GezlUHTw"
+);
 
-        <td>{z.fahrzeug}</td>
+export default function Admin() {
+  const [zeiten, setZeiten] = useState([]);
 
-        <td>
-          {new Date(z.startzeit).toLocaleString("de-DE")}
-        </td>
+  async function laden() {
+    const { data, error } = await supabase
+      .from("zeiten")
+      .select("*")
+      .order("id", { ascending: false });
 
-        <td>
-          {z.endzeit
-            ? new Date(z.endzeit).toLocaleString("de-DE")
-            : "-"}
-        </td>
+    if (!error) {
+      setZeiten(data || []);
+    }
+  }
 
-        <td>{z.status}</td>
-      </tr>
-    ))}
-  </tbody>
-</table>
+  useEffect(() => {
+    laden();
+  }, []);
+
+  return (
+    <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
+      <h1>RIS Admin</h1>
+
+      <button
+        onClick={laden}
+        style={{
+          padding: "10px 16px",
+          marginBottom: "20px",
+          cursor: "pointer"
+        }}
+      >
+        Aktualisieren
+      </button>
+
+      <table
+        border="1"
+        cellPadding="8"
+        style={{
+          borderCollapse: "collapse",
+          width: "100%",
+          background: "white"
+        }}
+      >
+        <thead>
+          <tr>
+            <th>Mitarbeiter</th>
+            <th>Fahrzeug</th>
+            <th>Start</th>
+            <th>Ende</th>
+            <th>GPS</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {zeiten.map((z) => (
+            <tr key={z.id}>
+              <td>{z.mitarbeiter}</td>
+              <td>{z.fahrzeug}</td>
+
+              <td>
+                {z.startzeit
+                  ? new Date(z.startzeit).toLocaleString("de-DE")
+                  : "-"}
+              </td>
+
+              <td>
+                {z.endzeit
+                  ? new Date(z.endzeit).toLocaleString("de-DE")
+                  : "-"}
+              </td>
+
+              <td>
+                {z.latitude && z.longitude
+                  ? `${z.latitude}, ${z.longitude}`
+                  : "kein GPS"}
+              </td>
+
+              <td>{z.status}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
