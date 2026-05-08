@@ -270,6 +270,7 @@ export default function Home() {
                 marginBottom: "24px"
               }}
             />
+
             <p style={{ fontSize: "22px", fontWeight: "bold" }}>
               Teşekkürler ekibe
             </p>
