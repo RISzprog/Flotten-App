@@ -63,6 +63,11 @@ export default function Home() {
   }
 
   async function ausstempeln() {
+    if (!name) {
+      setStatus("Bitte Mitarbeitername eingeben.");
+      return;
+    }
+
     const { data } = await supabase
       .from("zeiten")
       .select("*")
@@ -109,7 +114,7 @@ export default function Home() {
         <div style={{ textAlign: "center", marginBottom: "28px" }}>
           <h1
             style={{
-              fontSize: "42px",
+              fontSize: "44px",
               margin: "0",
               fontWeight: "900",
               color: "#0f2f6e"
@@ -138,10 +143,10 @@ export default function Home() {
         >
           <div
             style={{
-              background: "rgba(255,255,255,0.94)",
+              background: "rgba(255,255,255,0.95)",
               padding: "24px",
-              borderRadius: "22px",
-              boxShadow: "0 15px 35px rgba(15,47,110,0.22)"
+              borderRadius: "24px",
+              boxShadow: "0 15px 35px rgba(15,47,110,0.25)"
             }}
           >
             <label style={{ fontWeight: "bold", fontSize: "18px" }}>
@@ -231,7 +236,8 @@ export default function Home() {
                 borderRadius: "16px",
                 padding: "18px",
                 borderLeft: "6px solid #0f2f6e",
-                boxShadow: "0 8px 18px rgba(0,0,0,0.08)"
+                boxShadow: "0 8px 18px rgba(0,0,0,0.08)",
+                fontSize: "18px"
               }}
             >
               <strong>Status:</strong>{" "}
@@ -241,7 +247,7 @@ export default function Home() {
 
           <div
             style={{
-              background: "rgba(255,255,255,0.72)",
+              background: "rgba(255,255,255,0.78)",
               padding: "28px",
               borderRadius: "24px",
               boxShadow: "0 15px 35px rgba(15,47,110,0.18)"
