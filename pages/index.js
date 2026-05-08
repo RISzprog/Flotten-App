@@ -101,7 +101,7 @@ export default function Home() {
         minHeight: "100vh",
         padding: "20px",
         fontFamily: "Arial, sans-serif",
-        background: "linear-gradient(135deg, #1e3a8a 0%, #2563eb 45%, #f97316 100%)"
+        background: "linear-gradient(135deg, #1e3a8a 0%, #2563eb 45%, #f97316 100%)",
         backgroundAttachment: "fixed",
       }}
     >
