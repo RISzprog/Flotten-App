@@ -63,9 +63,37 @@ export default function Home() {
     );
   }
 
-  function ausstempeln() {
-    setStatus("✅ Ausgestempelt");
+  async function ausstempeln() {
+  const { data } = await supabase
+    .from("zeiten")
+    .select("*")
+    .eq("mitarbeiter", name)
+    .eq("status", "eingestempelt")
+    .order("id", { ascending: false })
+    .limit(1);
+
+  if (!data || data.length === 0) {
+    setStatus("Keine aktive Einstempelung gefunden");
+    return;
   }
+
+  const eintrag = data[0];
+
+  const { error } = await supabase
+    .from("zeiten")
+    .update({
+      endzeit: new Date().toISOString(),
+      status: "ausgestempelt"
+    })
+    .eq("id", eintrag.id);
+
+  if (error) {
+    setStatus("Fehler beim Ausstempeln");
+    return;
+  }
+
+  setStatus("✅ Ausgestempelt");
+}
 
   return (
     <div
