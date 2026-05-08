@@ -73,7 +73,7 @@ export default function Home() {
       minHeight: "100vh",
       padding: "20px",
       fontFamily: "Arial, sans-serif",
-      backgroundImage: "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=1600&auto=format&fit=crop')",
+      backgroundImage: "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('/ris-bg.png')",
       backgroundSize: "cover",
       backgroundPosition: "center"
     }}>
