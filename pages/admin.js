@@ -83,7 +83,22 @@ export default function Admin() {
                   : "kein GPS"}
               </td>
 
-              <td>{z.status}</td>
+              <td>
+               <span
+                style={{
+                 background:
+                 z.status === "eingestempelt"
+                 ? "#16a34a"
+                 : "#dc2626",
+                 color: "white",
+                 padding: "6px 12px",
+                 borderRadius: "8px",
+                 fontWeight: "bold"
+              }}
+             >
+               {z.status}
+             </span>
+            </td>
             </tr>
           ))}
         </tbody>
