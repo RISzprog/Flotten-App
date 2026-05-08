@@ -73,7 +73,7 @@ export default function Home() {
       minHeight: "100vh",
       padding: "20px",
       fontFamily: "Arial, sans-serif",
-      backgroundImage: "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('/top.png')",
+      backgroundImage: "linear-gradient(135deg, #0f172a, #1e3a8a, #15803d)",
       backgroundSize: "cover",
       backgroundPosition: "center"
     }}>
