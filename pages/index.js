@@ -6,47 +6,66 @@ export default function Home() {
   const [status, setStatus] = useState("");
 
   const einstempeln = () => {
-    navigator.geolocation.getCurrentPosition((position) => {
-      const daten = {
-        name,
-        fahrzeug,
-        zeit: new Date().toLocaleString(),
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-        status: "Eingestempelt"
-      };
+    if (!name || !fahrzeug) {
+      setStatus("Bitte Name und Fahrzeug auswählen.");
+      return;
+    }
 
-      console.log(daten);
+    setStatus("Einstempeln läuft...");
 
-      localStorage.setItem("letzterEintrag", JSON.stringify(daten));
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const daten = {
+          name: name,
+          fahrzeug: fahrzeug,
+          startzeit: new Date().toLocaleString(),
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          status: "eingestempelt"
+        };
 
-      setStatus("✅ Eingestempelt");
-    });
+        localStorage.setItem("aktuellerEintrag", JSON.stringify(daten));
+        setStatus("✅ Eingestempelt");
+      },
+      () => {
+        setStatus("Standort konnte nicht erfasst werden. Bitte Standort erlauben.");
+      }
+    );
   };
 
   const ausstempeln = () => {
-    setStatus("❌ Ausgestempelt");
+    const gespeicherterEintrag = localStorage.getItem("aktuellerEintrag");
+
+    if (!gespeicherterEintrag) {
+      setStatus("Du bist aktuell nicht eingestempelt.");
+      return;
+    }
+
+    const daten = JSON.parse(gespeicherterEintrag);
+    daten.endzeit = new Date().toLocaleString();
+    daten.status = "ausgestempelt";
+
+    localStorage.setItem("letzterEintrag", JSON.stringify(daten));
+    localStorage.removeItem("aktuellerEintrag");
+
+    setStatus("✅ Ausgestempelt");
   };
 
   return (
-    <div
-      style={{
-        fontFamily: "Arial",
-        background: "#f4f4f4",
-        minHeight: "100vh",
-        padding: "20px"
-      }}
-    >
+    <div style={{
+      fontFamily: "Arial",
+      background: "#f4f4f4",
+      minHeight: "100vh",
+      padding: "20px"
+    }}>
       <h1>RIS Flotten App</h1>
 
-      <div
-        style={{
-          background: "white",
-          padding: "20px",
-          borderRadius: "12px",
-          maxWidth: "400px"
-        }}
-      >
+      <div style={{
+        background: "white",
+        padding: "20px",
+        borderRadius: "12px",
+        maxWidth: "400px"
+      }}>
         <input
           placeholder="Mitarbeitername"
           value={name}
@@ -105,7 +124,11 @@ export default function Home() {
           Ausstempeln
         </button>
 
-        <p style={{ marginTop: "20px", fontWeight: "bold" }}>
+        <p style={{
+          marginTop: "20px",
+          fontWeight: "bold",
+          fontSize: "18px"
+        }}>
           {status}
         </p>
       </div>
