@@ -5,61 +5,60 @@ export default function Home() {
   const [fahrzeug, setFahrzeug] = useState("");
   const [status, setStatus] = useState("");
 
+  function speichernUndEinstempeln(gpsDaten) {
+    const daten = {
+      name,
+      fahrzeug,
+      startzeit: new Date().toLocaleString("de-DE"),
+      latitude: gpsDaten?.latitude || null,
+      longitude: gpsDaten?.longitude || null,
+      status: "eingestempelt"
+    };
+
+    localStorage.setItem("aktuellerEintrag", JSON.stringify(daten));
+    setStatus("✅ Eingestempelt");
+  }
+
   function einstempeln() {
     if (!name || !fahrzeug) {
       setStatus("Bitte Name und Fahrzeug auswählen.");
       return;
     }
 
-    setStatus("GPS wird gesucht...");
+    setStatus("Einstempeln läuft...");
 
     if (!navigator.geolocation) {
-      setStatus("GPS wird von diesem Gerät nicht unterstützt.");
+      speichernUndEinstempeln(null);
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       function (position) {
-        const daten = {
-          name: name,
-          fahrzeug: fahrzeug,
-          startzeit: new Date().toLocaleString("de-DE"),
+        speichernUndEinstempeln({
           latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          status: "eingestempelt"
-        };
-
-        localStorage.setItem("aktuellerEintrag", JSON.stringify(daten));
-        setStatus("✅ Eingestempelt");
+          longitude: position.coords.longitude
+        });
       },
-      function (error) {
-        if (error.code === 1) {
-          setStatus("❌ Standort wurde nicht erlaubt.");
-        } else if (error.code === 2) {
-          setStatus("❌ Standort nicht verfügbar. Bitte draußen oder am Fenster testen.");
-        } else if (error.code === 3) {
-          setStatus("❌ GPS braucht zu lange. Bitte erneut versuchen.");
-        } else {
-          setStatus("❌ GPS Fehler.");
-        }
+      function () {
+        speichernUndEinstempeln(null);
       },
       {
         enableHighAccuracy: false,
-        timeout: 60000,
+        timeout: 8000,
         maximumAge: 60000
       }
     );
   }
 
   function ausstempeln() {
-    const gespeicherterEintrag = localStorage.getItem("aktuellerEintrag");
+    const eintrag = localStorage.getItem("aktuellerEintrag");
 
-    if (!gespeicherterEintrag) {
+    if (!eintrag) {
       setStatus("Du bist aktuell nicht eingestempelt.");
       return;
     }
 
-    const daten = JSON.parse(gespeicherterEintrag);
+    const daten = JSON.parse(eintrag);
     daten.endzeit = new Date().toLocaleString("de-DE");
     daten.status = "ausgestempelt";
 
