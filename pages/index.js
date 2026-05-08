@@ -101,10 +101,17 @@ export default function Home() {
         minHeight: "100vh",
         padding: "20px",
         fontFamily: "Arial, sans-serif",
-        background: "linear-gradient(135deg, #0f172a, #1e3a8a, #15803d)"
+        background: "linear-gradient(135deg, #1e3a8a 0%, #2563eb 45%, #f97316 100%)"
+        backgroundAttachment: "fixed",
       }}
     >
-      <h1 style={{ color: "white", fontSize: "36px" }}>
+      <h1 style={{
+       color: "white",
+       fontSize: "42px",
+       fontWeight: "bold",
+       letterSpacing: "1px",
+       textShadow: "0 4px 12px rgba(0,0,0,0.35)"
+      }}>
         RIS Flotten App
       </h1>
 
