@@ -36,9 +36,9 @@ export default function Home() {
         setStatus("❌ Standort nicht erlaubt oder GPS nicht verfügbar.");
       },
       {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0
+        enableHighAccuracy: false,
+        timeout: 30000,
+        maximumAge: 60000
       }
     );
   }
