@@ -9,7 +9,7 @@ const supabase = createClient(
 export default function Home() {
   const [name, setName] = useState("");
   const [fahrzeug, setFahrzeug] = useState("");
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState("nicht eingestempelt");
 
   async function speichern(gpsDaten) {
     const daten = {
@@ -25,7 +25,6 @@ export default function Home() {
 
     if (error) {
       setStatus("Fehler beim Speichern");
-      console.log(error);
       return;
     }
 
@@ -99,11 +98,10 @@ export default function Home() {
     <div
       style={{
         minHeight: "100vh",
-        padding: "28px",
+        padding: "24px",
         fontFamily: "Arial, sans-serif",
         background:
-          "linear-gradient(135deg, #ffffff 0%, #eaf4ff 35%, #ffffff 52%, #ff8a00 100%)",
-        backgroundAttachment: "fixed",
+          "linear-gradient(135deg, #ffffff 0%, #eaf4ff 35%, #ffffff 55%, #ff8a00 100%)",
         color: "#0f2f6e"
       }}
     >
@@ -111,11 +109,10 @@ export default function Home() {
         <div style={{ textAlign: "center", marginBottom: "28px" }}>
           <h1
             style={{
-              fontSize: "46px",
+              fontSize: "42px",
               margin: "0",
               fontWeight: "900",
-              color: "#0f2f6e",
-              letterSpacing: "1px"
+              color: "#0f2f6e"
             }}
           >
             RIS Flotten App
@@ -123,7 +120,6 @@ export default function Home() {
 
           <p
             style={{
-              marginTop: "8px",
               color: "#f97316",
               fontWeight: "bold",
               fontSize: "18px"
@@ -137,16 +133,15 @@ export default function Home() {
           style={{
             display: "grid",
             gridTemplateColumns: "1.2fr 0.8fr",
-            gap: "28px",
-            alignItems: "start"
+            gap: "24px"
           }}
         >
           <div
             style={{
-              background: "rgba(255,255,255,0.92)",
-              padding: "26px",
-              borderRadius: "24px",
-              boxShadow: "0 15px 35px rgba(15,47,110,0.25)"
+              background: "rgba(255,255,255,0.94)",
+              padding: "24px",
+              borderRadius: "22px",
+              boxShadow: "0 15px 35px rgba(15,47,110,0.22)"
             }}
           >
             <label style={{ fontWeight: "bold", fontSize: "18px" }}>
@@ -240,9 +235,7 @@ export default function Home() {
               }}
             >
               <strong>Status:</strong>{" "}
-              <span style={{ fontWeight: "bold" }}>
-                {status || "nicht eingestempelt"}
-              </span>
+              <span style={{ fontWeight: "bold" }}>{status}</span>
             </div>
           </div>
 
@@ -251,16 +244,14 @@ export default function Home() {
               background: "rgba(255,255,255,0.72)",
               padding: "28px",
               borderRadius: "24px",
-              boxShadow: "0 15px 35px rgba(15,47,110,0.18)",
-              minHeight: "360px"
+              boxShadow: "0 15px 35px rgba(15,47,110,0.18)"
             }}
           >
             <h2
               style={{
                 color: "#0f2f6e",
                 fontSize: "32px",
-                marginTop: 0,
-                marginBottom: "18px"
+                marginTop: 0
               }}
             >
               Danke ans Team
@@ -269,22 +260,21 @@ export default function Home() {
             <div
               style={{
                 height: "3px",
-                width: "100%",
                 background: "linear-gradient(90deg, #f97316, #0f2f6e)",
-                marginBottom: "28px"
+                marginBottom: "24px"
               }}
             />
 
-            <p style={{ fontSize: "24px", fontWeight: "bold" }}>
+            <p style={{ fontSize: "22px", fontWeight: "bold" }}>
               Danke ans Team
             </p>
-            <p style={{ fontSize: "24px", fontWeight: "bold" }}>
+            <p style={{ fontSize: "22px", fontWeight: "bold" }}>
               Teşekkürler ekibe
             </p>
-            <p style={{ fontSize: "24px", fontWeight: "bold" }}>
+            <p style={{ fontSize: "22px", fontWeight: "bold" }}>
               Mulțumim echipei
             </p>
-            <p style={{ fontSize: "24px", fontWeight: "bold" }}>
+            <p style={{ fontSize: "22px", fontWeight: "bold" }}>
               Спасибо команде
             </p>
           </div>
