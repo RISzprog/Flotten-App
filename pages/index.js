@@ -17,7 +17,6 @@ export default function Home() {
       setStatus("GPS wird von diesem Gerät nicht unterstützt.");
       return;
     }
-
      navigator.permissions.query({ name: "geolocation" }).then(result => {
      console.log(result.state);
     });
