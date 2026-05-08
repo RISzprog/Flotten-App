@@ -18,7 +18,9 @@ export default function Home() {
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
+     navigator.permissions.query({ name: "geolocation" }).then(result => {
+     console.log(result.state);
+    });
       function (position) {
         const daten = {
           name,
