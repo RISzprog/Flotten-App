@@ -32,8 +32,8 @@ export default function Home() {
         localStorage.setItem("aktuellerEintrag", JSON.stringify(daten));
         setStatus("✅ Eingestempelt");
       },
-      function () {
-        setStatus("❌ Standort nicht erlaubt oder GPS nicht verfügbar.");
+      function (error) {
+        setStatus("❌ GPS Fehler: " + error.code + " - " + error.message);
       },
       {
         enableHighAccuracy: false,
