@@ -1,11 +1,37 @@
-import { useState } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  "https://rbhbijcxbemebynfrpiz.supabase.co",
+  "sb_publishable_URHTzamjcI6_j1dt0uTTlQ_GezlUHTw"
+);
 
 export default function Home() {
   const [name, setName] = useState("");
   const [fahrzeug, setFahrzeug] = useState("");
   const [status, setStatus] = useState("");
 
-  function speichernUndEinstempeln(gpsDaten) {
+  async function speichernUndEinstempeln(gpsDaten) {
+  const daten = {
+    mitarbeiter: name,
+    fahrzeug: fahrzeug,
+    startzeit: new Date().toISOString(),
+    latitude: gpsDaten?.latitude?.toString() || "",
+    longitude: gpsDaten?.longitude?.toString() || "",
+    status: "eingestempelt"
+  };
+
+  const { error } = await supabase
+    .from("zeiten")
+    .insert([daten]);
+
+  if (error) {
+    setStatus("❌ Fehler beim Speichern");
+    console.log(error);
+    return;
+  }
+
+  setStatus("✅ Eingestempelt");
+}
     const daten = {
       name,
       fahrzeug,
