@@ -42,7 +42,8 @@ export default function Home() {
     if (!navigator.geolocation) {
       speichern(null);
       return;
-    }
+    };
+    {
 
     navigator.geolocation.getCurrentPosition(
       function (position) {
@@ -56,6 +57,7 @@ export default function Home() {
   setStatus("GPS Fehler");
   speichern(null);
 }
+      );
       {
         enableHighAccuracy: false,
         timeout: 8000,
