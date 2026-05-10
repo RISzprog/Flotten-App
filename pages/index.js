@@ -212,14 +212,17 @@ export default function Home() {
           min-height: 100vh;
           padding: 24px;
           font-family: Arial, sans-serif;
-          background: linear-gradient(
-            135deg,
-            #ffffff 0%,
-            #eaf4ff 35%,
-            #ffffff 55%,
-            #ffb347 100%
-          );
-          color: #0f2f6e;
+
+          background:
+            linear-gradient(
+              135deg,
+              #071b4d 0%,
+              #0f2f6e 35%,
+              #1d4ed8 60%,
+              #f97316 100%
+            );
+
+          color: white;
         }
 
         .wrap {
@@ -236,16 +239,26 @@ export default function Home() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
+
           width: 86px;
           height: 50px;
+
           border-radius: 14px;
-          background: white;
-          color: #0f2f6e;
+
+          background: rgba(255,255,255,0.18);
+
+          backdrop-filter: blur(10px);
+
+          color: white;
+
           font-size: 30px;
           font-weight: 900;
-          box-shadow: 0 10px 25px
-            rgba(15, 47, 110, 0.18);
-          border-bottom: 5px solid #f97316;
+
+          box-shadow:
+            0 8px 24px rgba(0,0,0,0.25);
+
+          border: 1px solid rgba(255,255,255,0.2);
+
           margin-bottom: 10px;
         }
 
@@ -256,7 +269,7 @@ export default function Home() {
         }
 
         header p {
-          color: #f97316;
+          color: #ffd2a8;
           font-weight: bold;
           font-size: 18px;
         }
@@ -268,16 +281,20 @@ export default function Home() {
         }
 
         .card {
-          background: rgba(
-            255,
-            255,
-            255,
-            0.95
-          );
+          background: rgba(255, 255, 255, 0.14);
+
+          backdrop-filter: blur(14px);
+
           padding: 24px;
+
           border-radius: 24px;
-          box-shadow: 0 15px 35px
-            rgba(15, 47, 110, 0.2);
+
+          border: 1px solid rgba(255,255,255,0.18);
+
+          box-shadow:
+            0 8px 32px rgba(0,0,0,0.25);
+
+          color: white;
         }
 
         label {
@@ -292,47 +309,85 @@ export default function Home() {
           width: 100%;
           padding: 16px;
           margin-bottom: 20px;
+
           font-size: 18px;
+
           border-radius: 14px;
-          border: 1px solid #cbd5e1;
+
+          border: 1px solid rgba(255,255,255,0.2);
+
+          background: rgba(255,255,255,0.12);
+
+          color: white;
+
           box-sizing: border-box;
+        }
+
+        input::placeholder {
+          color: rgba(255,255,255,0.7);
+        }
+
+        option {
+          color: black;
         }
 
         button {
           width: 100%;
           padding: 20px;
+
           color: white;
+
           border: none;
+
           border-radius: 16px;
+
           font-size: 26px;
           font-weight: bold;
+
           margin-bottom: 14px;
         }
 
         .green {
-          background: linear-gradient(
-            135deg,
-            #16a34a,
-            #15803d
-          );
+          background:
+            linear-gradient(
+              135deg,
+              #16a34a,
+              #15803d
+            );
+
+          box-shadow:
+            0 8px 24px rgba(0,0,0,0.25);
         }
 
         .red {
-          background: linear-gradient(
-            135deg,
-            #ef4444,
-            #b91c1c
-          );
+          background:
+            linear-gradient(
+              135deg,
+              #ef4444,
+              #b91c1c
+            );
+
+          box-shadow:
+            0 8px 24px rgba(0,0,0,0.25);
         }
 
         .status {
           margin-top: 8px;
-          background: #f8fafc;
+
+          background: rgba(255,255,255,0.12);
+
           border-radius: 12px;
+
           padding: 12px 16px;
-          border: 1px solid #dbeafe;
+
+          border: 1px solid rgba(255,255,255,0.16);
+
           font-size: 17px;
           font-weight: bold;
+
+          color: white;
+
+          backdrop-filter: blur(10px);
         }
 
         .thanks {
@@ -346,11 +401,14 @@ export default function Home() {
 
         .line {
           height: 3px;
-          background: linear-gradient(
-            90deg,
-            #f97316,
-            #0f2f6e
-          );
+
+          background:
+            linear-gradient(
+              90deg,
+              #f97316,
+              #ffffff
+            );
+
           margin-bottom: 24px;
         }
 
@@ -363,6 +421,8 @@ export default function Home() {
           text-align: center;
           margin-top: 36px;
           font-weight: bold;
+
+          color: rgba(255,255,255,0.9);
         }
 
         @media (max-width: 800px) {
