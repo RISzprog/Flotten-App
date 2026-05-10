@@ -123,7 +123,6 @@ export default function Home() {
 
           <h1>RIS Flotten App</h1>
 
-          <p>Reinigung – Instandhaltung – Sicherheit</p>
         </header>
 
         <main>
