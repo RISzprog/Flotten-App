@@ -16,20 +16,12 @@ export default function Home() {
       mitarbeiter: name,
       fahrzeug: fahrzeug,
       startzeit: new Date().toISOString(),
-      latitude:
-        gpsDaten && gpsDaten.latitude
-          ? String(gpsDaten.latitude)
-          : "",
-      longitude:
-        gpsDaten && gpsDaten.longitude
-          ? String(gpsDaten.longitude)
-          : "",
+      latitude: gpsDaten && gpsDaten.latitude ? String(gpsDaten.latitude) : "",
+      longitude: gpsDaten && gpsDaten.longitude ? String(gpsDaten.longitude) : "",
       status: "eingestempelt"
     };
 
-    const { error } = await supabase
-      .from("zeiten")
-      .insert([daten]);
+    const { error } = await supabase.from("zeiten").insert([daten]);
 
     if (error) {
       setStatus("Fehler beim Speichern");
@@ -50,18 +42,12 @@ export default function Home() {
       .select("*")
       .eq("status", "eingestempelt");
 
-    if (
-      data &&
-      data.some((e) => e.fahrzeug === fahrzeug)
-    ) {
+    if (data && data.some((e) => e.fahrzeug === fahrzeug)) {
       setStatus("🚫 Fahrzeug bereits im Einsatz");
       return;
     }
 
-    if (
-      data &&
-      data.some((e) => e.mitarbeiter === name)
-    ) {
+    if (data && data.some((e) => e.mitarbeiter === name)) {
       setStatus("🚫 Mitarbeiter bereits eingestempelt");
       return;
     }
@@ -133,13 +119,11 @@ export default function Home() {
     <div className="page">
       <div className="wrap">
         <header>
-          <div className="logo">RIS</div>
+          <img src="/logo.png" alt="RIS Logo" className="logoImg" />
 
           <h1>RIS Flotten App</h1>
 
-          <p>
-            Reinigung – Instandhaltung – Sicherheit
-          </p>
+          <p>Reinigung – Instandhaltung – Sicherheit</p>
         </header>
 
         <main>
@@ -149,46 +133,31 @@ export default function Home() {
             <input
               placeholder="Mitarbeitername"
               value={name}
-              onChange={(e) =>
-                setName(e.target.value)
-              }
+              onChange={(e) => setName(e.target.value)}
             />
 
             <label>Fahrzeug wählen</label>
 
             <select
               value={fahrzeug}
-              onChange={(e) =>
-                setFahrzeug(e.target.value)
-              }
+              onChange={(e) => setFahrzeug(e.target.value)}
             >
-              <option value="">
-                Fahrzeug wählen
-              </option>
-
+              <option value="">Fahrzeug wählen</option>
               <option>Vito 1</option>
               <option>Vito 2</option>
               <option>Sprinter</option>
               <option>Crafter</option>
             </select>
 
-            <button
-              className="green"
-              onClick={einstempeln}
-            >
+            <button className="green" onClick={einstempeln}>
               Einstempeln
             </button>
 
-            <button
-              className="red"
-              onClick={ausstempeln}
-            >
+            <button className="red" onClick={ausstempeln}>
               Ausstempeln
             </button>
 
-            <div className="status">
-              Status: {status}
-            </div>
+            <div className="status">Status: {status}</div>
           </section>
 
           <section className="thanks">
@@ -197,9 +166,7 @@ export default function Home() {
             <div className="line" />
 
             <p>Teşekkürler ekibe</p>
-
             <p>Mulțumim echipei</p>
-
             <p>Спасибо команде</p>
           </section>
         </main>
@@ -212,16 +179,13 @@ export default function Home() {
           min-height: 100vh;
           padding: 24px;
           font-family: Arial, sans-serif;
-
-          background:
-            linear-gradient(
-              135deg,
-              #071b4d 0%,
-              #0f2f6e 35%,
-              #1d4ed8 60%,
-              #f97316 100%
-            );
-
+          background: linear-gradient(
+            90deg,
+            #2f5fb3 0%,
+            #4f7fd8 42%,
+            #f3a24d 72%,
+            #ef7d22 100%
+          );
           color: white;
         }
 
@@ -235,43 +199,25 @@ export default function Home() {
           margin-bottom: 28px;
         }
 
-        .logo {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-
-          width: 86px;
-          height: 50px;
-
-          border-radius: 14px;
-
-          background: rgba(255,255,255,0.18);
-
-          backdrop-filter: blur(10px);
-
-          color: white;
-
-          font-size: 30px;
-          font-weight: 900;
-
-          box-shadow:
-            0 8px 24px rgba(0,0,0,0.25);
-
-          border: 1px solid rgba(255,255,255,0.2);
-
-          margin-bottom: 10px;
+        .logoImg {
+          width: 260px;
+          max-width: 80%;
+          margin-bottom: 12px;
+          filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.25));
         }
 
         h1 {
           font-size: 44px;
           margin: 0;
           font-weight: 900;
+          text-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
         }
 
         header p {
-          color: #ffd2a8;
+          color: white;
           font-weight: bold;
           font-size: 18px;
+          text-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
         }
 
         main {
@@ -281,19 +227,12 @@ export default function Home() {
         }
 
         .card {
-          background: rgba(255, 255, 255, 0.14);
-
-          backdrop-filter: blur(14px);
-
+          background: rgba(255, 255, 255, 0.18);
+          backdrop-filter: blur(16px);
           padding: 24px;
-
           border-radius: 24px;
-
-          border: 1px solid rgba(255,255,255,0.18);
-
-          box-shadow:
-            0 8px 32px rgba(0,0,0,0.25);
-
+          border: 1px solid rgba(255, 255, 255, 0.28);
+          box-shadow: 0 12px 34px rgba(0, 0, 0, 0.22);
           color: white;
         }
 
@@ -309,22 +248,16 @@ export default function Home() {
           width: 100%;
           padding: 16px;
           margin-bottom: 20px;
-
           font-size: 18px;
-
           border-radius: 14px;
-
-          border: 1px solid rgba(255,255,255,0.2);
-
-          background: rgba(255,255,255,0.12);
-
+          border: 1px solid rgba(255, 255, 255, 0.35);
+          background: rgba(255, 255, 255, 0.18);
           color: white;
-
           box-sizing: border-box;
         }
 
         input::placeholder {
-          color: rgba(255,255,255,0.7);
+          color: rgba(255, 255, 255, 0.75);
         }
 
         option {
@@ -334,64 +267,39 @@ export default function Home() {
         button {
           width: 100%;
           padding: 20px;
-
           color: white;
-
           border: none;
-
           border-radius: 16px;
-
           font-size: 26px;
           font-weight: bold;
-
           margin-bottom: 14px;
+          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
         }
 
         .green {
-          background:
-            linear-gradient(
-              135deg,
-              #16a34a,
-              #15803d
-            );
-
-          box-shadow:
-            0 8px 24px rgba(0,0,0,0.25);
+          background: linear-gradient(135deg, #16a34a, #15803d);
         }
 
         .red {
-          background:
-            linear-gradient(
-              135deg,
-              #ef4444,
-              #b91c1c
-            );
-
-          box-shadow:
-            0 8px 24px rgba(0,0,0,0.25);
+          background: linear-gradient(135deg, #ef4444, #b91c1c);
         }
 
         .status {
           margin-top: 8px;
-
-          background: rgba(255,255,255,0.12);
-
+          background: rgba(255, 255, 255, 0.18);
           border-radius: 12px;
-
           padding: 12px 16px;
-
-          border: 1px solid rgba(255,255,255,0.16);
-
+          border: 1px solid rgba(255, 255, 255, 0.24);
           font-size: 17px;
           font-weight: bold;
-
           color: white;
-
           backdrop-filter: blur(10px);
         }
 
         .thanks {
           padding: 20px;
+          color: white;
+          text-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
         }
 
         .thanks h2 {
@@ -401,14 +309,7 @@ export default function Home() {
 
         .line {
           height: 3px;
-
-          background:
-            linear-gradient(
-              90deg,
-              #f97316,
-              #ffffff
-            );
-
+          background: linear-gradient(90deg, #ffffff, #f97316);
           margin-bottom: 24px;
         }
 
@@ -421,8 +322,7 @@ export default function Home() {
           text-align: center;
           margin-top: 36px;
           font-weight: bold;
-
-          color: rgba(255,255,255,0.9);
+          color: rgba(255, 255, 255, 0.95);
         }
 
         @media (max-width: 800px) {
@@ -432,6 +332,10 @@ export default function Home() {
 
           h1 {
             font-size: 34px;
+          }
+
+          .logoImg {
+            width: 210px;
           }
 
           .thanks {
