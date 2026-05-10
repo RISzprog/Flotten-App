@@ -8,6 +8,7 @@ const supabase = createClient(
 
 function formatZeit(value) {
   if (!value) return "-";
+
   return new Date(value).toLocaleString("de-DE", {
     day: "2-digit",
     month: "2-digit",
@@ -30,6 +31,7 @@ function dauer(start, ende) {
 
 export default function Admin() {
   const [zeiten, setZeiten] = useState([]);
+  const [meldung, setMeldung] = useState("");
 
   async function laden() {
     const { data, error } = await supabase
@@ -40,6 +42,25 @@ export default function Admin() {
     if (!error) {
       setZeiten(data || []);
     }
+  }
+
+  async function loeschen(id) {
+    const sicher = window.confirm("Diesen Eintrag wirklich löschen?");
+
+    if (!sicher) return;
+
+    const { error } = await supabase
+      .from("zeiten")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      setMeldung("Fehler beim Löschen");
+      return;
+    }
+
+    setMeldung("Eintrag gelöscht");
+    laden();
   }
 
   useEffect(() => {
@@ -55,9 +76,13 @@ export default function Admin() {
           <p>Zeiten · Fahrzeuge · GPS · Arbeitsdauer</p>
         </header>
 
-        <button className="refresh" onClick={laden}>
-          Aktualisieren
-        </button>
+        <div className="topbar">
+          <button className="refresh" onClick={laden}>
+            Aktualisieren
+          </button>
+
+          {meldung && <div className="message">{meldung}</div>}
+        </div>
 
         <div className="tableWrap">
           <table>
@@ -70,6 +95,7 @@ export default function Admin() {
                 <th>Dauer</th>
                 <th>GPS</th>
                 <th>Status</th>
+                <th>Aktion</th>
               </tr>
             </thead>
 
@@ -81,6 +107,7 @@ export default function Admin() {
                   <td>{formatZeit(z.startzeit)}</td>
                   <td>{formatZeit(z.endzeit)}</td>
                   <td>{dauer(z.startzeit, z.endzeit)}</td>
+
                   <td>
                     {z.latitude && z.longitude ? (
                       <a
@@ -94,6 +121,7 @@ export default function Admin() {
                       <span className="muted">GPS deaktiviert</span>
                     )}
                   </td>
+
                   <td>
                     <span
                       className={
@@ -106,6 +134,15 @@ export default function Admin() {
                         ? "Eingestempelt"
                         : "Ausgestempelt"}
                     </span>
+                  </td>
+
+                  <td>
+                    <button
+                      className="delete"
+                      onClick={() => loeschen(z.id)}
+                    >
+                      Löschen
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -121,12 +158,18 @@ export default function Admin() {
           min-height: 100vh;
           padding: 24px;
           font-family: Arial, sans-serif;
-          background: linear-gradient(135deg, #ffffff 0%, #eaf4ff 35%, #ffffff 55%, #ffb347 100%);
+          background: linear-gradient(
+            135deg,
+            #ffffff 0%,
+            #eaf4ff 35%,
+            #ffffff 55%,
+            #ffb347 100%
+          );
           color: #0f2f6e;
         }
 
         .wrap {
-          max-width: 1200px;
+          max-width: 1250px;
           margin: 0 auto;
         }
 
@@ -163,6 +206,13 @@ export default function Admin() {
           font-size: 18px;
         }
 
+        .topbar {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          margin-bottom: 18px;
+        }
+
         .refresh {
           background: #0f2f6e;
           color: white;
@@ -170,7 +220,14 @@ export default function Admin() {
           padding: 12px 18px;
           border-radius: 12px;
           font-weight: bold;
-          margin-bottom: 18px;
+        }
+
+        .message {
+          background: white;
+          padding: 10px 14px;
+          border-radius: 10px;
+          font-weight: bold;
+          box-shadow: 0 8px 18px rgba(15, 47, 110, 0.12);
         }
 
         .tableWrap {
@@ -183,7 +240,7 @@ export default function Admin() {
         table {
           width: 100%;
           border-collapse: collapse;
-          min-width: 900px;
+          min-width: 1050px;
         }
 
         th {
@@ -224,6 +281,16 @@ export default function Admin() {
 
         .red {
           background: #dc2626;
+        }
+
+        .delete {
+          background: #dc2626;
+          color: white;
+          border: none;
+          padding: 8px 12px;
+          border-radius: 10px;
+          font-weight: bold;
+          cursor: pointer;
         }
 
         footer {
