@@ -51,9 +51,11 @@ export default function Home() {
           longitude: position.coords.longitude
         });
       },
-      function () {
-        speichern(null);
-      },
+    function (error) {
+  console.log(error);
+  setStatus("GPS Fehler");
+  speichern(null);
+}
       {
         enableHighAccuracy: false,
         timeout: 8000,
