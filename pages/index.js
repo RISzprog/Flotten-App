@@ -14,10 +14,10 @@ export default function Home() {
   async function speichern(gpsDaten) {
     const daten = {
       mitarbeiter: name,
-      fahrzeug,
+      fahrzeug: fahrzeug,
       startzeit: new Date().toISOString(),
-      latitude: gpsDaten?.latitude?.toString() || "",
-      longitude: gpsDaten?.longitude?.toString() || "",
+      latitude: gpsDaten && gpsDaten.latitude ? String(gpsDaten.latitude) : "",
+      longitude: gpsDaten && gpsDaten.longitude ? String(gpsDaten.longitude) : "",
       status: "eingestempelt"
     };
 
@@ -37,13 +37,12 @@ export default function Home() {
       return;
     }
 
-    setStatus("Einstempeln läuft...");
+    setStatus("GPS wird gesucht...");
 
     if (!navigator.geolocation) {
       speichern(null);
       return;
-    };
-    {
+    }
 
     navigator.geolocation.getCurrentPosition(
       function (position) {
@@ -52,16 +51,14 @@ export default function Home() {
           longitude: position.coords.longitude
         });
       },
-    function (error) {
-  console.log(error);
-  setStatus("GPS Fehler");
-  speichern(null);
-}
-      );
+      function () {
+        setStatus("GPS deaktiviert - trotzdem eingestempelt");
+        speichern(null);
+      },
       {
-        enableHighAccuracy: false,
-        timeout: 8000,
-        maximumAge: 60000
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
       }
     );
   }
@@ -122,7 +119,10 @@ export default function Home() {
             />
 
             <label>Fahrzeug wählen</label>
-            <select value={fahrzeug} onChange={(e) => setFahrzeug(e.target.value)}>
+            <select
+              value={fahrzeug}
+              onChange={(e) => setFahrzeug(e.target.value)}
+            >
               <option value="">Fahrzeug wählen</option>
               <option>Vito 1</option>
               <option>Vito 2</option>
@@ -130,8 +130,13 @@ export default function Home() {
               <option>Crafter</option>
             </select>
 
-            <button className="green" onClick={einstempeln}>Einstempeln</button>
-            <button className="red" onClick={ausstempeln}>Ausstempeln</button>
+            <button className="green" onClick={einstempeln}>
+              Einstempeln
+            </button>
+
+            <button className="red" onClick={ausstempeln}>
+              Ausstempeln
+            </button>
 
             <div className="status">Status: {status}</div>
           </section>
@@ -279,7 +284,6 @@ export default function Home() {
           text-align: center;
           margin-top: 36px;
           font-weight: bold;
-          color: #0f2f6e;
         }
 
         @media (max-width: 800px) {
