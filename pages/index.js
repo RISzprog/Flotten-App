@@ -16,12 +16,20 @@ export default function Home() {
       mitarbeiter: name,
       fahrzeug: fahrzeug,
       startzeit: new Date().toISOString(),
-      latitude: gpsDaten && gpsDaten.latitude ? String(gpsDaten.latitude) : "",
-      longitude: gpsDaten && gpsDaten.longitude ? String(gpsDaten.longitude) : "",
+      latitude:
+        gpsDaten && gpsDaten.latitude
+          ? String(gpsDaten.latitude)
+          : "",
+      longitude:
+        gpsDaten && gpsDaten.longitude
+          ? String(gpsDaten.longitude)
+          : "",
       status: "eingestempelt"
     };
 
-    const { error } = await supabase.from("zeiten").insert([daten]);
+    const { error } = await supabase
+      .from("zeiten")
+      .insert([daten]);
 
     if (error) {
       setStatus("Fehler beim Speichern");
@@ -40,11 +48,21 @@ export default function Home() {
     const { data } = await supabase
       .from("zeiten")
       .select("*")
-      .eq("fahrzeug", fahrzeug)
       .eq("status", "eingestempelt");
 
-    if (data && data.length > 0) {
+    if (
+      data &&
+      data.some((e) => e.fahrzeug === fahrzeug)
+    ) {
       setStatus("🚫 Fahrzeug bereits im Einsatz");
+      return;
+    }
+
+    if (
+      data &&
+      data.some((e) => e.mitarbeiter === name)
+    ) {
+      setStatus("🚫 Mitarbeiter bereits eingestempelt");
       return;
     }
 
@@ -116,8 +134,12 @@ export default function Home() {
       <div className="wrap">
         <header>
           <div className="logo">RIS</div>
+
           <h1>RIS Flotten App</h1>
-          <p>Reinigung – Instandhaltung – Sicherheit</p>
+
+          <p>
+            Reinigung – Instandhaltung – Sicherheit
+          </p>
         </header>
 
         <main>
@@ -127,27 +149,40 @@ export default function Home() {
             <input
               placeholder="Mitarbeitername"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) =>
+                setName(e.target.value)
+              }
             />
 
             <label>Fahrzeug wählen</label>
 
             <select
               value={fahrzeug}
-              onChange={(e) => setFahrzeug(e.target.value)}
+              onChange={(e) =>
+                setFahrzeug(e.target.value)
+              }
             >
-              <option value="">Fahrzeug wählen</option>
+              <option value="">
+                Fahrzeug wählen
+              </option>
+
               <option>Vito 1</option>
               <option>Vito 2</option>
               <option>Sprinter</option>
               <option>Crafter</option>
             </select>
 
-            <button className="green" onClick={einstempeln}>
+            <button
+              className="green"
+              onClick={einstempeln}
+            >
               Einstempeln
             </button>
 
-            <button className="red" onClick={ausstempeln}>
+            <button
+              className="red"
+              onClick={ausstempeln}
+            >
               Ausstempeln
             </button>
 
@@ -162,7 +197,9 @@ export default function Home() {
             <div className="line" />
 
             <p>Teşekkürler ekibe</p>
+
             <p>Mulțumim echipei</p>
+
             <p>Спасибо команде</p>
           </section>
         </main>
@@ -175,7 +212,13 @@ export default function Home() {
           min-height: 100vh;
           padding: 24px;
           font-family: Arial, sans-serif;
-          background: linear-gradient(135deg, #ffffff 0%, #eaf4ff 35%, #ffffff 55%, #ffb347 100%);
+          background: linear-gradient(
+            135deg,
+            #ffffff 0%,
+            #eaf4ff 35%,
+            #ffffff 55%,
+            #ffb347 100%
+          );
           color: #0f2f6e;
         }
 
@@ -200,7 +243,8 @@ export default function Home() {
           color: #0f2f6e;
           font-size: 30px;
           font-weight: 900;
-          box-shadow: 0 10px 25px rgba(15, 47, 110, 0.18);
+          box-shadow: 0 10px 25px
+            rgba(15, 47, 110, 0.18);
           border-bottom: 5px solid #f97316;
           margin-bottom: 10px;
         }
@@ -224,10 +268,16 @@ export default function Home() {
         }
 
         .card {
-          background: rgba(255, 255, 255, 0.95);
+          background: rgba(
+            255,
+            255,
+            255,
+            0.95
+          );
           padding: 24px;
           border-radius: 24px;
-          box-shadow: 0 15px 35px rgba(15, 47, 110, 0.2);
+          box-shadow: 0 15px 35px
+            rgba(15, 47, 110, 0.2);
         }
 
         label {
@@ -260,11 +310,19 @@ export default function Home() {
         }
 
         .green {
-          background: linear-gradient(135deg, #16a34a, #15803d);
+          background: linear-gradient(
+            135deg,
+            #16a34a,
+            #15803d
+          );
         }
 
         .red {
-          background: linear-gradient(135deg, #ef4444, #b91c1c);
+          background: linear-gradient(
+            135deg,
+            #ef4444,
+            #b91c1c
+          );
         }
 
         .status {
@@ -288,7 +346,11 @@ export default function Home() {
 
         .line {
           height: 3px;
-          background: linear-gradient(90deg, #f97316, #0f2f6e);
+          background: linear-gradient(
+            90deg,
+            #f97316,
+            #0f2f6e
+          );
           margin-bottom: 24px;
         }
 
