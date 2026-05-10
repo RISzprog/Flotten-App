@@ -31,9 +31,20 @@ export default function Home() {
     setStatus("🟢 Eingestempelt");
   }
 
-  function einstempeln() {
+  async function einstempeln() {
     if (!name || !fahrzeug) {
       setStatus("Bitte Name und Fahrzeug auswählen.");
+      return;
+    }
+
+    const { data } = await supabase
+      .from("zeiten")
+      .select("*")
+      .eq("fahrzeug", fahrzeug)
+      .eq("status", "eingestempelt");
+
+    if (data && data.length > 0) {
+      setStatus("🚫 Fahrzeug bereits im Einsatz");
       return;
     }
 
@@ -112,6 +123,7 @@ export default function Home() {
         <main>
           <section className="card">
             <label>Mitarbeiter wählen</label>
+
             <input
               placeholder="Mitarbeitername"
               value={name}
@@ -119,6 +131,7 @@ export default function Home() {
             />
 
             <label>Fahrzeug wählen</label>
+
             <select
               value={fahrzeug}
               onChange={(e) => setFahrzeug(e.target.value)}
@@ -138,12 +151,16 @@ export default function Home() {
               Ausstempeln
             </button>
 
-            <div className="status">Status: {status}</div>
+            <div className="status">
+              Status: {status}
+            </div>
           </section>
 
           <section className="thanks">
             <h2>Danke ans Team</h2>
+
             <div className="line" />
+
             <p>Teşekkürler ekibe</p>
             <p>Mulțumim echipei</p>
             <p>Спасибо команде</p>
