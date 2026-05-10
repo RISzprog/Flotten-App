@@ -14,7 +14,7 @@ export default function Home() {
   async function speichern(gpsDaten) {
     const daten = {
       mitarbeiter: name,
-      fahrzeug: fahrzeug,
+      fahrzeug,
       startzeit: new Date().toISOString(),
       latitude: gpsDaten?.latitude?.toString() || "",
       longitude: gpsDaten?.longitude?.toString() || "",
@@ -28,7 +28,7 @@ export default function Home() {
       return;
     }
 
-    setStatus("✅ Eingestempelt");
+    setStatus("🟢 Eingestempelt");
   }
 
   function einstempeln() {
@@ -96,71 +96,29 @@ export default function Home() {
       return;
     }
 
-    setStatus("✅ Ausgestempelt");
+    setStatus("🔴 Ausgestempelt");
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        padding: "24px",
-        fontFamily: "Arial, sans-serif",
-        background: "linear-gradient(135deg, #ffffff 0%, #eaf4ff 35%, #ffffff 55%, #ffb347 100%)",
-        color: "#0f2f6e"
-      }}
-    >
-      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-        <h1 style={{ fontSize: "44px", margin: 0, fontWeight: "900", textAlign: "center" }}>
-          RIS Flotten App
-        </h1>
+    <div className="page">
+      <div className="wrap">
+        <header>
+          <div className="logo">RIS</div>
+          <h1>RIS Flotten App</h1>
+          <p>Reinigung – Instandhaltung – Sicherheit</p>
+        </header>
 
-        <p style={{ color: "#f97316", fontWeight: "bold", fontSize: "18px", textAlign: "center" }}>
-          Reinigung – Instandhaltung – Sicherheit
-        </p>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "24px", marginTop: "28px" }}>
-          <div
-            style={{
-              background: "rgba(255,255,255,0.95)",
-              padding: "24px",
-              borderRadius: "24px",
-              boxShadow: "0 15px 35px rgba(15,47,110,0.20)"
-            }}
-          >
-            <label style={{ fontWeight: "bold", fontSize: "18px" }}>Mitarbeiter wählen</label>
-
+        <main>
+          <section className="card">
+            <label>Mitarbeiter wählen</label>
             <input
               placeholder="Mitarbeitername"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "16px",
-                marginTop: "8px",
-                marginBottom: "20px",
-                fontSize: "18px",
-                borderRadius: "14px",
-                border: "1px solid #cbd5e1",
-                boxSizing: "border-box"
-              }}
             />
 
-            <label style={{ fontWeight: "bold", fontSize: "18px" }}>Fahrzeug wählen</label>
-
-            <select
-              value={fahrzeug}
-              onChange={(e) => setFahrzeug(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "16px",
-                marginTop: "8px",
-                marginBottom: "24px",
-                fontSize: "18px",
-                borderRadius: "14px",
-                border: "1px solid #cbd5e1",
-                boxSizing: "border-box"
-              }}
-            >
+            <label>Fahrzeug wählen</label>
+            <select value={fahrzeug} onChange={(e) => setFahrzeug(e.target.value)}>
               <option value="">Fahrzeug wählen</option>
               <option>Vito 1</option>
               <option>Vito 2</option>
@@ -168,73 +126,172 @@ export default function Home() {
               <option>Crafter</option>
             </select>
 
-            <button
-              onClick={einstempeln}
-              style={{
-                width: "100%",
-                padding: "20px",
-                background: "linear-gradient(135deg, #16a34a, #15803d)",
-                color: "white",
-                border: "none",
-                borderRadius: "16px",
-                fontSize: "26px",
-                fontWeight: "bold",
-                marginBottom: "14px"
-              }}
-            >
-              Einstempeln
-            </button>
+            <button className="green" onClick={einstempeln}>Einstempeln</button>
+            <button className="red" onClick={ausstempeln}>Ausstempeln</button>
 
-            <button
-              onClick={ausstempeln}
-              style={{
-                width: "100%",
-                padding: "20px",
-                background: "linear-gradient(135deg, #ef4444, #b91c1c)",
-                color: "white",
-                border: "none",
-                borderRadius: "16px",
-                fontSize: "26px",
-                fontWeight: "bold"
-              }}
-            >
-              Ausstempeln
-            </button>
+            <div className="status">Status: {status}</div>
+          </section>
 
-            <div
-              style={{
-                marginTop: "18px",
-                background: "#f8fafc",
-                borderRadius: "12px",
-                padding: "12px 16px",
-                border: "1px solid #dbeafe",
-                fontSize: "17px",
-                fontWeight: "bold"
-              }}
-            >
-              Status: {status}
-            </div>
-          </div>
+          <section className="thanks">
+            <h2>Danke ans Team</h2>
+            <div className="line" />
+            <p>Teşekkürler ekibe</p>
+            <p>Mulțumim echipei</p>
+            <p>Спасибо команде</p>
+          </section>
+        </main>
 
-          <div style={{ padding: "20px" }}>
-            <h2 style={{ color: "#0f2f6e", fontSize: "32px", marginTop: 0 }}>
-              Danke ans Team
-            </h2>
-
-            <div
-              style={{
-                height: "3px",
-                background: "linear-gradient(90deg, #f97316, #0f2f6e)",
-                marginBottom: "24px"
-              }}
-            />
-
-            <p style={{ fontSize: "22px", fontWeight: "bold" }}>Teşekkürler ekibe</p>
-            <p style={{ fontSize: "22px", fontWeight: "bold" }}>Mulțumim echipei</p>
-            <p style={{ fontSize: "22px", fontWeight: "bold" }}>Спасибо команде</p>
-          </div>
-        </div>
+        <footer>© RIS 2026</footer>
       </div>
+
+      <style jsx>{`
+        .page {
+          min-height: 100vh;
+          padding: 24px;
+          font-family: Arial, sans-serif;
+          background: linear-gradient(135deg, #ffffff 0%, #eaf4ff 35%, #ffffff 55%, #ffb347 100%);
+          color: #0f2f6e;
+        }
+
+        .wrap {
+          max-width: 1100px;
+          margin: 0 auto;
+        }
+
+        header {
+          text-align: center;
+          margin-bottom: 28px;
+        }
+
+        .logo {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 86px;
+          height: 50px;
+          border-radius: 14px;
+          background: white;
+          color: #0f2f6e;
+          font-size: 30px;
+          font-weight: 900;
+          box-shadow: 0 10px 25px rgba(15, 47, 110, 0.18);
+          border-bottom: 5px solid #f97316;
+          margin-bottom: 10px;
+        }
+
+        h1 {
+          font-size: 44px;
+          margin: 0;
+          font-weight: 900;
+        }
+
+        header p {
+          color: #f97316;
+          font-weight: bold;
+          font-size: 18px;
+        }
+
+        main {
+          display: grid;
+          grid-template-columns: 1.2fr 0.8fr;
+          gap: 24px;
+        }
+
+        .card {
+          background: rgba(255, 255, 255, 0.95);
+          padding: 24px;
+          border-radius: 24px;
+          box-shadow: 0 15px 35px rgba(15, 47, 110, 0.2);
+        }
+
+        label {
+          display: block;
+          font-weight: bold;
+          font-size: 18px;
+          margin-bottom: 8px;
+        }
+
+        input,
+        select {
+          width: 100%;
+          padding: 16px;
+          margin-bottom: 20px;
+          font-size: 18px;
+          border-radius: 14px;
+          border: 1px solid #cbd5e1;
+          box-sizing: border-box;
+        }
+
+        button {
+          width: 100%;
+          padding: 20px;
+          color: white;
+          border: none;
+          border-radius: 16px;
+          font-size: 26px;
+          font-weight: bold;
+          margin-bottom: 14px;
+        }
+
+        .green {
+          background: linear-gradient(135deg, #16a34a, #15803d);
+        }
+
+        .red {
+          background: linear-gradient(135deg, #ef4444, #b91c1c);
+        }
+
+        .status {
+          margin-top: 8px;
+          background: #f8fafc;
+          border-radius: 12px;
+          padding: 12px 16px;
+          border: 1px solid #dbeafe;
+          font-size: 17px;
+          font-weight: bold;
+        }
+
+        .thanks {
+          padding: 20px;
+        }
+
+        .thanks h2 {
+          font-size: 32px;
+          margin-top: 0;
+        }
+
+        .line {
+          height: 3px;
+          background: linear-gradient(90deg, #f97316, #0f2f6e);
+          margin-bottom: 24px;
+        }
+
+        .thanks p {
+          font-size: 22px;
+          font-weight: bold;
+        }
+
+        footer {
+          text-align: center;
+          margin-top: 36px;
+          font-weight: bold;
+          color: #0f2f6e;
+        }
+
+        @media (max-width: 800px) {
+          main {
+            grid-template-columns: 1fr;
+          }
+
+          h1 {
+            font-size: 34px;
+          }
+
+          .thanks {
+            padding: 10px;
+          }
+        }
+      `}</style>
     </div>
   );
 }
