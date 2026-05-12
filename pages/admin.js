@@ -261,8 +261,7 @@ export default function Admin() {
     setMeldung("Mitarbeiter hinzugefügt");
 
     mitarbeiterLaden();
-  }
-    async function fahrzeugBearbeiten(f) {
+  }  async function fahrzeugBearbeiten(f) {
     const neuerName = window.prompt(
       "Fahrzeugname:",
       f.name
