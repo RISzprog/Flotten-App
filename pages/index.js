@@ -60,9 +60,13 @@ export default function Home() {
   }
 
   async function speichern(gpsDaten) {
+    const fahrzeugText = fahrzeugObjekt
+      ? `${fahrzeugObjekt.name}${fahrzeugObjekt.kennzeichen ? " · " + fahrzeugObjekt.kennzeichen : ""}`
+      : fahrzeug;
+
     const daten = {
       mitarbeiter: name,
-      fahrzeug: fahrzeug,
+      fahrzeug: fahrzeugText,
       startzeit: new Date().toISOString(),
       latitude: gpsDaten && gpsDaten.latitude ? String(gpsDaten.latitude) : "",
       longitude: gpsDaten && gpsDaten.longitude ? String(gpsDaten.longitude) : "",
@@ -80,17 +84,26 @@ export default function Home() {
   }
 
   async function abholen() {
-    if (!name || !fahrzeug) {
+    if (!name || !fahrzeugObjekt) {
       setStatus("Bitte Mitarbeiter und Fahrzeug auswählen.");
       return;
     }
+
+    const fahrzeugText = `${fahrzeugObjekt.name}${fahrzeugObjekt.kennzeichen ? " · " + fahrzeugObjekt.kennzeichen : ""}`;
 
     const { data } = await supabase
       .from("zeiten")
       .select("*")
       .eq("status", "eingestempelt");
 
-    if (data && data.some((e) => e.fahrzeug === fahrzeug)) {
+    if (
+      data &&
+      data.some((e) =>
+        e.fahrzeug === fahrzeugText ||
+        e.fahrzeug === fahrzeugObjekt.name ||
+        e.fahrzeug?.startsWith(fahrzeugObjekt.name + " ·")
+      )
+    ) {
       setStatus("🚫 Fahrzeug bereits im Einsatz");
       return;
     }
@@ -100,6 +113,7 @@ export default function Home() {
       return;
     }
 
+    setFahrzeug(fahrzeugText);
     setStatus("GPS wird gesucht...");
 
     if (!navigator.geolocation) {
@@ -204,28 +218,33 @@ export default function Home() {
             <label>Fahrzeug wählen</label>
 
             <select
-  value={fahrzeug}
-  onChange={(e) => {
-    const selected = fahrzeuge.find((f) => f.id === Number(e.target.value));
+              value={fahrzeugObjekt ? fahrzeugObjekt.id : ""}
+              onChange={(e) => {
+                const selected = fahrzeuge.find(
+                  (f) => f.id === Number(e.target.value)
+                );
 
-    if (!selected) return;
+                if (!selected) {
+                  setFahrzeug("");
+                  setFahrzeugObjekt(null);
+                  return;
+                }
 
-    setFahrzeug(
-      `${selected.name}${selected.kennzeichen ? " · " + selected.kennzeichen : ""}`
-    );
+                setFahrzeug(
+                  `${selected.name}${selected.kennzeichen ? " · " + selected.kennzeichen : ""}`
+                );
+                setFahrzeugObjekt(selected);
+              }}
+            >
+              <option value="">Fahrzeug wählen</option>
 
-    setFahrzeugObjekt(selected);
-  }}
->
-  <option value="">Fahrzeug wählen</option>
-
-  {fahrzeuge.map((f) => (
-    <option key={f.id} value={f.id}>
-      {f.name}
-      {f.kennzeichen ? ` - ${f.kennzeichen}` : ""}
-    </option>
-  ))}
-</select>
+              {fahrzeuge.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.name}
+                  {f.kennzeichen ? ` - ${f.kennzeichen}` : ""}
+                </option>
+              ))}
+            </select>
 
             <button className="green" onClick={abholen}>
               Abholen
@@ -359,6 +378,9 @@ export default function Home() {
           font-size: 18px;
           font-weight: bold;
           border-bottom: 1px solid #e5e7eb;
+          box-shadow: none;
+          margin-bottom: 0;
+          border-radius: 0;
         }
 
         button {
