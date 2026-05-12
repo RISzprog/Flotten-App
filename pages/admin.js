@@ -35,23 +35,34 @@ export default function Admin() {
   const [session, setSession] = useState(null);
   const [email, setEmail] = useState("");
   const [passwort, setPasswort] = useState("");
-  const [zeiten, setZeiten] = useState([]);
-  const [meldung, setMeldung] = useState("");
 
+  const [zeiten, setZeiten] = useState([]);
+  const [fahrzeuge, setFahrzeuge] = useState([]);
+
+  const [meldung, setMeldung] = useState("");
   const [fahrzeugFilter, setFahrzeugFilter] = useState("");
   const [datumFilter, setDatumFilter] = useState("");
   const [nurAktive, setNurAktive] = useState(false);
   const [suche, setSuche] = useState("");
 
+  const [neuesFahrzeug, setNeuesFahrzeug] = useState("");
+  const [neuesKennzeichen, setNeuesKennzeichen] = useState("");
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
-      if (data.session) laden();
+      if (data.session) {
+        laden();
+        fahrzeugeLaden();
+      }
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
-      if (newSession) laden();
+      if (newSession) {
+        laden();
+        fahrzeugeLaden();
+      }
     });
 
     return () => {
@@ -69,7 +80,6 @@ export default function Admin() {
 
     if (error) {
       setMeldung("Login fehlgeschlagen");
-      return;
     }
   }
 
@@ -89,8 +99,100 @@ export default function Admin() {
     }
   }
 
-  async function loeschen(id) {
-    const sicher = window.confirm("Diesen Eintrag wirklich löschen?");
+  async function fahrzeugeLaden() {
+    const { data, error } = await supabase
+      .from("fahrzeuge")
+      .select("*")
+      .order("name", { ascending: true });
+
+    if (!error) {
+      setFahrzeuge(data || []);
+    }
+  }
+
+  async function fahrzeugHinzufuegen() {
+    if (!neuesFahrzeug.trim()) {
+      setMeldung("Bitte Fahrzeugname eingeben");
+      return;
+    }
+
+    const { error } = await supabase.from("fahrzeuge").insert([
+      {
+        name: neuesFahrzeug.trim(),
+        kennzeichen: neuesKennzeichen.trim(),
+        aktiv: true
+      }
+    ]);
+
+    if (error) {
+      setMeldung("Fehler beim Fahrzeug hinzufügen");
+      return;
+    }
+
+    setNeuesFahrzeug("");
+    setNeuesKennzeichen("");
+    setMeldung("Fahrzeug hinzugefügt");
+    fahrzeugeLaden();
+  }
+
+  async function fahrzeugAktivAendern(id, aktiv) {
+    const { error } = await supabase
+      .from("fahrzeuge")
+      .update({ aktiv: !aktiv })
+      .eq("id", id);
+
+    if (error) {
+      setMeldung("Fehler beim Ändern");
+      return;
+    }
+
+    fahrzeugeLaden();
+  }
+
+  async function fahrzeugLoeschen(id) {
+    const sicher = window.confirm("Fahrzeug wirklich löschen?");
+    if (!sicher) return;
+
+    const { error } = await supabase
+      .from("fahrzeuge")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      setMeldung("Fehler beim Löschen");
+      return;
+    }
+
+    setMeldung("Fahrzeug gelöscht");
+    fahrzeugeLaden();
+  }
+
+  async function fahrzeugBearbeiten(fahrzeug) {
+    const neuerName = window.prompt("Fahrzeugname ändern:", fahrzeug.name);
+    if (!neuerName) return;
+
+    const neuesKennz = window.prompt("Kennzeichen ändern:", fahrzeug.kennzeichen || "");
+
+    const { error } = await supabase
+      .from("fahrzeuge")
+      .update({
+        name: neuerName.trim(),
+        kennzeichen: neuesKennz ? neuesKennz.trim() : ""
+      })
+      .eq("id", fahrzeug.id);
+
+    if (error) {
+      setMeldung("Fehler beim Bearbeiten");
+      return;
+    }
+
+    setMeldung("Fahrzeug geändert");
+    fahrzeugeLaden();
+    laden();
+  }
+
+  async function eintragLoeschen(id) {
+    const sicher = window.confirm("Diesen Zeiteintrag wirklich löschen?");
     if (!sicher) return;
 
     const { error } = await supabase
@@ -107,10 +209,9 @@ export default function Admin() {
     laden();
   }
 
-  const fahrzeuge = useMemo(() => {
-    const liste = zeiten.map((z) => z.fahrzeug).filter(Boolean);
-    return [...new Set(liste)].sort();
-  }, [zeiten]);
+  const fahrzeugNamen = useMemo(() => {
+    return fahrzeuge.map((f) => f.name).filter(Boolean).sort();
+  }, [fahrzeuge]);
 
   const gefilterteZeiten = useMemo(() => {
     return zeiten
@@ -129,10 +230,8 @@ export default function Admin() {
       .sort((a, b) => {
         if (a.status === "eingestempelt" && b.status !== "eingestempelt") return -1;
         if (a.status !== "eingestempelt" && b.status === "eingestempelt") return 1;
-
         if ((a.fahrzeug || "") < (b.fahrzeug || "")) return -1;
         if ((a.fahrzeug || "") > (b.fahrzeug || "")) return 1;
-
         return new Date(b.startzeit) - new Date(a.startzeit);
       });
   }, [zeiten, fahrzeugFilter, datumFilter, nurAktive, suche]);
@@ -243,6 +342,56 @@ export default function Admin() {
           <p>Zeiten · Fahrzeuge · GPS · Arbeitsdauer</p>
         </header>
 
+        <div className="topActions">
+          <button className="refresh" onClick={() => { laden(); fahrzeugeLaden(); }}>
+            Aktualisieren
+          </button>
+          <button className="logout" onClick={logout}>Logout</button>
+        </div>
+
+        {meldung && <div className="message">{meldung}</div>}
+
+        <section className="vehicleBox">
+          <h2>Fahrzeuge verwalten</h2>
+
+          <div className="vehicleForm">
+            <input
+              placeholder="Fahrzeugname, z. B. Vito 3"
+              value={neuesFahrzeug}
+              onChange={(e) => setNeuesFahrzeug(e.target.value)}
+            />
+
+            <input
+              placeholder="Kennzeichen"
+              value={neuesKennzeichen}
+              onChange={(e) => setNeuesKennzeichen(e.target.value)}
+            />
+
+            <button className="add" onClick={fahrzeugHinzufuegen}>
+              Fahrzeug hinzufügen
+            </button>
+          </div>
+
+          <div className="vehicleGrid">
+            {fahrzeuge.map((f) => (
+              <div key={f.id} className={f.aktiv ? "vehicleCard" : "vehicleCard inactive"}>
+                <strong>{f.name}</strong>
+                <span>{f.kennzeichen || "kein Kennzeichen"}</span>
+
+                <div className="vehicleButtons">
+                  <button onClick={() => fahrzeugBearbeiten(f)}>Bearbeiten</button>
+                  <button onClick={() => fahrzeugAktivAendern(f.id, f.aktiv)}>
+                    {f.aktiv ? "Deaktivieren" : "Aktivieren"}
+                  </button>
+                  <button className="smallDelete" onClick={() => fahrzeugLoeschen(f.id)}>
+                    Löschen
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <div className="filters">
           <input
             placeholder="Suche Mitarbeiter/Fahrzeug"
@@ -252,7 +401,7 @@ export default function Admin() {
 
           <select value={fahrzeugFilter} onChange={(e) => setFahrzeugFilter(e.target.value)}>
             <option value="">Alle Fahrzeuge</option>
-            {fahrzeuge.map((f) => (
+            {fahrzeugNamen.map((f) => (
               <option key={f} value={f}>{f}</option>
             ))}
           </select>
@@ -267,12 +416,7 @@ export default function Admin() {
             />
             Nur aktive
           </label>
-
-          <button className="refresh" onClick={laden}>Aktualisieren</button>
-          <button className="logout" onClick={logout}>Logout</button>
         </div>
-
-        {meldung && <div className="message">{meldung}</div>}
 
         <div className="tableWrap">
           <table>
@@ -321,7 +465,7 @@ export default function Admin() {
                   </td>
 
                   <td>
-                    <button className="delete" onClick={() => loeschen(z.id)}>
+                    <button className="delete" onClick={() => eintragLoeschen(z.id)}>
                       Löschen
                     </button>
                   </td>
@@ -380,9 +524,117 @@ export default function Admin() {
           font-size: 18px;
         }
 
+        .topActions {
+          display: flex;
+          gap: 12px;
+          margin-bottom: 18px;
+        }
+
+        .refresh,
+        .logout,
+        .add {
+          border: none;
+          padding: 12px 18px;
+          border-radius: 12px;
+          font-weight: bold;
+          color: white;
+        }
+
+        .refresh,
+        .add {
+          background: #0f2f6e;
+        }
+
+        .logout {
+          background: #dc2626;
+        }
+
+        .message {
+          background: white;
+          padding: 10px 14px;
+          border-radius: 10px;
+          font-weight: bold;
+          margin-bottom: 12px;
+        }
+
+        .vehicleBox {
+          background: rgba(255,255,255,0.94);
+          padding: 18px;
+          border-radius: 20px;
+          margin-bottom: 18px;
+          box-shadow: 0 15px 35px rgba(0,0,0,0.14);
+        }
+
+        .vehicleBox h2 {
+          margin-top: 0;
+        }
+
+        .vehicleForm {
+          display: grid;
+          grid-template-columns: 1fr 1fr auto;
+          gap: 12px;
+          margin-bottom: 16px;
+        }
+
+        .vehicleForm input {
+          padding: 12px;
+          border-radius: 12px;
+          border: 1px solid #cbd5e1;
+          font-size: 15px;
+        }
+
+        .vehicleGrid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+          gap: 12px;
+        }
+
+        .vehicleCard {
+          background: #f8fafc;
+          border-radius: 16px;
+          padding: 14px;
+          border-left: 6px solid #16a34a;
+        }
+
+        .vehicleCard.inactive {
+          opacity: 0.55;
+          border-left-color: #dc2626;
+        }
+
+        .vehicleCard strong {
+          display: block;
+          font-size: 18px;
+        }
+
+        .vehicleCard span {
+          display: block;
+          color: #64748b;
+          margin-top: 4px;
+          margin-bottom: 10px;
+        }
+
+        .vehicleButtons {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .vehicleButtons button {
+          border: none;
+          background: #0f2f6e;
+          color: white;
+          padding: 7px 10px;
+          border-radius: 9px;
+          font-weight: bold;
+        }
+
+        .vehicleButtons .smallDelete {
+          background: #dc2626;
+        }
+
         .filters {
           display: grid;
-          grid-template-columns: 1.4fr 1fr 1fr auto auto auto;
+          grid-template-columns: 1.4fr 1fr 1fr auto;
           gap: 12px;
           margin-bottom: 18px;
           background: rgba(255,255,255,0.22);
@@ -407,32 +659,6 @@ export default function Admin() {
           padding: 10px 12px;
           border-radius: 12px;
           font-weight: bold;
-        }
-
-        .refresh {
-          background: #0f2f6e;
-          color: white;
-          border: none;
-          padding: 12px 18px;
-          border-radius: 12px;
-          font-weight: bold;
-        }
-
-        .logout {
-          background: #dc2626;
-          color: white;
-          border: none;
-          padding: 12px 18px;
-          border-radius: 12px;
-          font-weight: bold;
-        }
-
-        .message {
-          background: white;
-          padding: 10px 14px;
-          border-radius: 10px;
-          font-weight: bold;
-          margin-bottom: 12px;
         }
 
         .tableWrap {
@@ -505,6 +731,7 @@ export default function Admin() {
         }
 
         @media (max-width: 900px) {
+          .vehicleForm,
           .filters {
             grid-template-columns: 1fr;
           }
