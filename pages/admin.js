@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   "https://rbhbijcxbemebynfrpiz.supabase.co",
   "sb_publishable_URHTzamjcI6_j1dt0uTTlQ_GezlUHTw"
 );
+
+const ADMIN_PASSWORT = "RIS2026";
 
 function formatZeit(value) {
   if (!value) return "-";
@@ -16,6 +18,12 @@ function formatZeit(value) {
     hour: "2-digit",
     minute: "2-digit"
   });
+}
+
+function formatDatum(value) {
+  if (!value) return "";
+
+  return new Date(value).toISOString().slice(0, 10);
 }
 
 function dauer(start, ende) {
@@ -33,11 +41,19 @@ export default function Admin() {
   const [zeiten, setZeiten] = useState([]);
   const [meldung, setMeldung] = useState("");
 
+  const [passwort, setPasswort] = useState("");
+  const [eingeloggt, setEingeloggt] = useState(false);
+
+  const [fahrzeugFilter, setFahrzeugFilter] = useState("");
+  const [datumFilter, setDatumFilter] = useState("");
+  const [nurAktive, setNurAktive] = useState(false);
+  const [suche, setSuche] = useState("");
+
   async function laden() {
     const { data, error } = await supabase
       .from("zeiten")
       .select("*")
-      .order("id", { ascending: false });
+      .order("startzeit", { ascending: false });
 
     if (!error) {
       setZeiten(data || []);
@@ -63,9 +79,139 @@ export default function Admin() {
     laden();
   }
 
+  function login() {
+    if (passwort === ADMIN_PASSWORT) {
+      setEingeloggt(true);
+      setMeldung("");
+      laden();
+    } else {
+      setMeldung("Falsches Passwort");
+    }
+  }
+
+  const fahrzeuge = useMemo(() => {
+    const liste = zeiten
+      .map((z) => z.fahrzeug)
+      .filter(Boolean);
+
+    return [...new Set(liste)].sort();
+  }, [zeiten]);
+
+  const gefilterteZeiten = useMemo(() => {
+    return zeiten
+      .filter((z) => {
+        if (fahrzeugFilter && z.fahrzeug !== fahrzeugFilter) return false;
+        if (datumFilter && formatDatum(z.startzeit) !== datumFilter) return false;
+        if (nurAktive && z.status !== "eingestempelt") return false;
+
+        if (suche) {
+          const text = `${z.mitarbeiter || ""} ${z.fahrzeug || ""}`.toLowerCase();
+          if (!text.includes(suche.toLowerCase())) return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        if (a.status === "eingestempelt" && b.status !== "eingestempelt") return -1;
+        if (a.status !== "eingestempelt" && b.status === "eingestempelt") return 1;
+
+        if ((a.fahrzeug || "") < (b.fahrzeug || "")) return -1;
+        if ((a.fahrzeug || "") > (b.fahrzeug || "")) return 1;
+
+        return new Date(b.startzeit) - new Date(a.startzeit);
+      });
+  }, [zeiten, fahrzeugFilter, datumFilter, nurAktive, suche]);
+
   useEffect(() => {
-    laden();
-  }, []);
+    if (eingeloggt) {
+      laden();
+    }
+  }, [eingeloggt]);
+
+  if (!eingeloggt) {
+    return (
+      <div className="page">
+        <div className="loginBox">
+          <div className="logo">RIS</div>
+          <h1>Admin Login</h1>
+
+          <input
+            type="password"
+            placeholder="Admin Passwort"
+            value={passwort}
+            onChange={(e) => setPasswort(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && login()}
+          />
+
+          <button onClick={login}>Einloggen</button>
+
+          {meldung && <p className="error">{meldung}</p>}
+        </div>
+
+        <style jsx>{`
+          .page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(90deg, #2f5fb3 0%, #4f7fd8 42%, #f3a24d 72%, #ef7d22 100%);
+          }
+
+          .loginBox {
+            background: rgba(255,255,255,0.92);
+            padding: 28px;
+            border-radius: 24px;
+            width: 360px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+            text-align: center;
+            color: #0f2f6e;
+          }
+
+          .logo {
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 86px;
+            height: 50px;
+            border-radius: 14px;
+            background: white;
+            color: #0f2f6e;
+            font-size: 30px;
+            font-weight: 900;
+            border-bottom: 5px solid #f97316;
+          }
+
+          input {
+            width: 100%;
+            padding: 14px;
+            margin: 16px 0;
+            font-size: 18px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            box-sizing: border-box;
+          }
+
+          button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: #0f2f6e;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+          }
+
+          .error {
+            color: #dc2626;
+            font-weight: bold;
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <div className="page">
@@ -76,20 +222,52 @@ export default function Admin() {
           <p>Zeiten · Fahrzeuge · GPS · Arbeitsdauer</p>
         </header>
 
-        <div className="topbar">
+        <div className="filters">
+          <input
+            placeholder="Suche Mitarbeiter/Fahrzeug"
+            value={suche}
+            onChange={(e) => setSuche(e.target.value)}
+          />
+
+          <select
+            value={fahrzeugFilter}
+            onChange={(e) => setFahrzeugFilter(e.target.value)}
+          >
+            <option value="">Alle Fahrzeuge</option>
+            {fahrzeuge.map((f) => (
+              <option key={f} value={f}>{f}</option>
+            ))}
+          </select>
+
+          <input
+            type="date"
+            value={datumFilter}
+            onChange={(e) => setDatumFilter(e.target.value)}
+          />
+
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={nurAktive}
+              onChange={(e) => setNurAktive(e.target.checked)}
+            />
+            Nur aktive
+          </label>
+
           <button className="refresh" onClick={laden}>
             Aktualisieren
           </button>
-
-          {meldung && <div className="message">{meldung}</div>}
         </div>
+
+        {meldung && <div className="message">{meldung}</div>}
 
         <div className="tableWrap">
           <table>
             <thead>
               <tr>
-                <th>Mitarbeiter</th>
+                <th>Datum</th>
                 <th>Fahrzeug</th>
+                <th>Mitarbeiter</th>
                 <th>Start</th>
                 <th>Ende</th>
                 <th>Dauer</th>
@@ -100,10 +278,11 @@ export default function Admin() {
             </thead>
 
             <tbody>
-              {zeiten.map((z) => (
+              {gefilterteZeiten.map((z) => (
                 <tr key={z.id}>
+                  <td>{formatZeit(z.startzeit).split(",")[0]}</td>
+                  <td><strong>{z.fahrzeug}</strong></td>
                   <td>{z.mitarbeiter}</td>
-                  <td>{z.fahrzeug}</td>
                   <td>{formatZeit(z.startzeit)}</td>
                   <td>{formatZeit(z.endzeit)}</td>
                   <td>{dauer(z.startzeit, z.endzeit)}</td>
@@ -123,24 +302,13 @@ export default function Admin() {
                   </td>
 
                   <td>
-                    <span
-                      className={
-                        z.status === "eingestempelt"
-                          ? "badge green"
-                          : "badge red"
-                      }
-                    >
-                      {z.status === "eingestempelt"
-                        ? "Eingestempelt"
-                        : "Ausgestempelt"}
+                    <span className={z.status === "eingestempelt" ? "badge green" : "badge red"}>
+                      {z.status === "eingestempelt" ? "Eingestempelt" : "Ausgestempelt"}
                     </span>
                   </td>
 
                   <td>
-                    <button
-                      className="delete"
-                      onClick={() => loeschen(z.id)}
-                    >
+                    <button className="delete" onClick={() => loeschen(z.id)}>
                       Löschen
                     </button>
                   </td>
@@ -158,28 +326,24 @@ export default function Admin() {
           min-height: 100vh;
           padding: 24px;
           font-family: Arial, sans-serif;
-          background: linear-gradient(
-            135deg,
-            #ffffff 0%,
-            #eaf4ff 35%,
-            #ffffff 55%,
-            #ffb347 100%
-          );
+          background: linear-gradient(90deg, #2f5fb3 0%, #4f7fd8 42%, #f3a24d 72%, #ef7d22 100%);
           color: #0f2f6e;
         }
 
         .wrap {
-          max-width: 1250px;
+          max-width: 1300px;
           margin: 0 auto;
         }
 
         header {
           text-align: center;
           margin-bottom: 24px;
+          color: white;
         }
 
         .logo {
-          display: inline-flex;
+          margin: 0 auto 10px;
+          display: flex;
           align-items: center;
           justify-content: center;
           width: 86px;
@@ -189,9 +353,7 @@ export default function Admin() {
           color: #0f2f6e;
           font-size: 30px;
           font-weight: 900;
-          box-shadow: 0 10px 25px rgba(15, 47, 110, 0.18);
           border-bottom: 5px solid #f97316;
-          margin-bottom: 10px;
         }
 
         h1 {
@@ -201,16 +363,37 @@ export default function Admin() {
         }
 
         header p {
-          color: #f97316;
           font-weight: bold;
           font-size: 18px;
         }
 
-        .topbar {
+        .filters {
+          display: grid;
+          grid-template-columns: 1.4fr 1fr 1fr auto auto;
+          gap: 12px;
+          margin-bottom: 18px;
+          background: rgba(255,255,255,0.22);
+          backdrop-filter: blur(14px);
+          padding: 14px;
+          border-radius: 18px;
+        }
+
+        .filters input,
+        .filters select {
+          padding: 12px;
+          border-radius: 12px;
+          border: none;
+          font-size: 15px;
+        }
+
+        .check {
           display: flex;
           align-items: center;
-          gap: 14px;
-          margin-bottom: 18px;
+          gap: 8px;
+          background: white;
+          padding: 10px 12px;
+          border-radius: 12px;
+          font-weight: bold;
         }
 
         .refresh {
@@ -227,20 +410,20 @@ export default function Admin() {
           padding: 10px 14px;
           border-radius: 10px;
           font-weight: bold;
-          box-shadow: 0 8px 18px rgba(15, 47, 110, 0.12);
+          margin-bottom: 12px;
         }
 
         .tableWrap {
           overflow-x: auto;
-          background: rgba(255, 255, 255, 0.96);
+          background: rgba(255,255,255,0.96);
           border-radius: 20px;
-          box-shadow: 0 15px 35px rgba(15, 47, 110, 0.18);
+          box-shadow: 0 15px 35px rgba(0,0,0,0.18);
         }
 
         table {
           width: 100%;
           border-collapse: collapse;
-          min-width: 1050px;
+          min-width: 1100px;
         }
 
         th {
@@ -290,13 +473,19 @@ export default function Admin() {
           padding: 8px 12px;
           border-radius: 10px;
           font-weight: bold;
-          cursor: pointer;
         }
 
         footer {
           text-align: center;
           margin-top: 36px;
           font-weight: bold;
+          color: white;
+        }
+
+        @media (max-width: 900px) {
+          .filters {
+            grid-template-columns: 1fr;
+          }
         }
       `}</style>
     </div>
