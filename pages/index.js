@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -10,6 +10,23 @@ export default function Home() {
   const [name, setName] = useState("");
   const [fahrzeug, setFahrzeug] = useState("");
   const [status, setStatus] = useState("nicht eingestempelt");
+  const [fahrzeuge, setFahrzeuge] = useState([]);
+
+  async function fahrzeugeLaden() {
+    const { data, error } = await supabase
+      .from("fahrzeuge")
+      .select("*")
+      .eq("aktiv", true)
+      .order("name", { ascending: true });
+
+    if (!error) {
+      setFahrzeuge(data || []);
+    }
+  }
+
+  useEffect(() => {
+    fahrzeugeLaden();
+  }, []);
 
   async function speichern(gpsDaten) {
     const daten = {
@@ -120,9 +137,7 @@ export default function Home() {
       <div className="wrap">
         <header>
           <img src="/logo.png" alt="RIS Logo" className="logoImg" />
-
           <h1>RIS Flotten App</h1>
-
         </header>
 
         <main>
@@ -142,10 +157,13 @@ export default function Home() {
               onChange={(e) => setFahrzeug(e.target.value)}
             >
               <option value="">Fahrzeug wählen</option>
-              <option>Vito 1</option>
-              <option>Vito 2</option>
-              <option>Sprinter</option>
-              <option>Crafter</option>
+
+              {fahrzeuge.map((f) => (
+                <option key={f.id} value={f.name}>
+                  {f.name}
+                  {f.kennzeichen ? ` - ${f.kennzeichen}` : ""}
+                </option>
+              ))}
             </select>
 
             <button className="green" onClick={einstempeln}>
@@ -161,9 +179,7 @@ export default function Home() {
 
           <section className="thanks">
             <h2>Danke ans Team</h2>
-
             <div className="line" />
-
             <p>Teşekkürler ekibe</p>
             <p>Mulțumim echipei</p>
             <p>Спасибо команде</p>
@@ -201,6 +217,7 @@ export default function Home() {
         .logoImg {
           width: 260px;
           max-width: 80%;
+          height: auto;
           margin-bottom: 12px;
           filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.25));
         }
@@ -210,13 +227,6 @@ export default function Home() {
           margin: 0;
           font-weight: 900;
           text-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-        }
-
-        header p {
-          color: white;
-          font-weight: bold;
-          font-size: 18px;
-          text-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
         }
 
         main {
@@ -232,7 +242,6 @@ export default function Home() {
           border-radius: 24px;
           border: 1px solid rgba(255, 255, 255, 0.28);
           box-shadow: 0 12px 34px rgba(0, 0, 0, 0.22);
-          color: white;
         }
 
         label {
@@ -291,13 +300,10 @@ export default function Home() {
           border: 1px solid rgba(255, 255, 255, 0.24);
           font-size: 17px;
           font-weight: bold;
-          color: white;
-          backdrop-filter: blur(10px);
         }
 
         .thanks {
           padding: 20px;
-          color: white;
           text-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
         }
 
@@ -321,7 +327,6 @@ export default function Home() {
           text-align: center;
           margin-top: 36px;
           font-weight: bold;
-          color: rgba(255, 255, 255, 0.95);
         }
 
         @media (max-width: 800px) {
@@ -335,10 +340,6 @@ export default function Home() {
 
           .logoImg {
             width: 210px;
-          }
-
-          .thanks {
-            padding: 10px;
           }
         }
       `}</style>
