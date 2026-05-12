@@ -38,31 +38,30 @@ export default function Admin() {
 
   const [zeiten, setZeiten] = useState([]);
   const [fahrzeuge, setFahrzeuge] = useState([]);
+  const [mitarbeiter, setMitarbeiter] = useState([]);
 
   const [meldung, setMeldung] = useState("");
+
+  const [neuesFahrzeug, setNeuesFahrzeug] = useState("");
+  const [neuesKennzeichen, setNeuesKennzeichen] = useState("");
+
+  const [neuerVorname, setNeuerVorname] = useState("");
+  const [neuerNachname, setNeuerNachname] = useState("");
+
   const [fahrzeugFilter, setFahrzeugFilter] = useState("");
   const [datumFilter, setDatumFilter] = useState("");
   const [nurAktive, setNurAktive] = useState(false);
   const [suche, setSuche] = useState("");
 
-  const [neuesFahrzeug, setNeuesFahrzeug] = useState("");
-  const [neuesKennzeichen, setNeuesKennzeichen] = useState("");
-
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
-      if (data.session) {
-        laden();
-        fahrzeugeLaden();
-      }
+      if (data.session) allesLaden();
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
-      if (newSession) {
-        laden();
-        fahrzeugeLaden();
-      }
+      if (newSession) allesLaden();
     });
 
     return () => {
@@ -88,15 +87,19 @@ export default function Admin() {
     setSession(null);
   }
 
+  async function allesLaden() {
+    await laden();
+    await fahrzeugeLaden();
+    await mitarbeiterLaden();
+  }
+
   async function laden() {
     const { data, error } = await supabase
       .from("zeiten")
       .select("*")
       .order("startzeit", { ascending: false });
 
-    if (!error) {
-      setZeiten(data || []);
-    }
+    if (!error) setZeiten(data || []);
   }
 
   async function fahrzeugeLaden() {
@@ -105,9 +108,16 @@ export default function Admin() {
       .select("*")
       .order("name", { ascending: true });
 
-    if (!error) {
-      setFahrzeuge(data || []);
-    }
+    if (!error) setFahrzeuge(data || []);
+  }
+
+  async function mitarbeiterLaden() {
+    const { data, error } = await supabase
+      .from("mitarbeiter")
+      .select("*")
+      .order("nachname", { ascending: true });
+
+    if (!error) setMitarbeiter(data || []);
   }
 
   async function fahrzeugHinzufuegen() {
@@ -132,6 +142,29 @@ export default function Admin() {
     setNeuesFahrzeug("");
     setNeuesKennzeichen("");
     setMeldung("Fahrzeug hinzugefügt");
+    fahrzeugeLaden();
+  }
+
+  async function fahrzeugBearbeiten(f) {
+    const neuerName = window.prompt("Fahrzeugname:", f.name);
+    if (!neuerName) return;
+
+    const neuesKennz = window.prompt("Kennzeichen:", f.kennzeichen || "");
+
+    const { error } = await supabase
+      .from("fahrzeuge")
+      .update({
+        name: neuerName.trim(),
+        kennzeichen: neuesKennz ? neuesKennz.trim() : ""
+      })
+      .eq("id", f.id);
+
+    if (error) {
+      setMeldung("Fehler beim Bearbeiten");
+      return;
+    }
+
+    setMeldung("Fahrzeug geändert");
     fahrzeugeLaden();
   }
 
@@ -167,28 +200,85 @@ export default function Admin() {
     fahrzeugeLaden();
   }
 
-  async function fahrzeugBearbeiten(fahrzeug) {
-    const neuerName = window.prompt("Fahrzeugname ändern:", fahrzeug.name);
-    if (!neuerName) return;
+  async function mitarbeiterHinzufuegen() {
+    if (!neuerVorname.trim() || !neuerNachname.trim()) {
+      setMeldung("Bitte Vorname und Nachname eingeben");
+      return;
+    }
 
-    const neuesKennz = window.prompt("Kennzeichen ändern:", fahrzeug.kennzeichen || "");
+    const { error } = await supabase.from("mitarbeiter").insert([
+      {
+        vorname: neuerVorname.trim(),
+        nachname: neuerNachname.trim(),
+        aktiv: true
+      }
+    ]);
+
+    if (error) {
+      setMeldung("Fehler beim Mitarbeiter hinzufügen");
+      return;
+    }
+
+    setNeuerVorname("");
+    setNeuerNachname("");
+    setMeldung("Mitarbeiter hinzugefügt");
+    mitarbeiterLaden();
+  }
+
+  async function mitarbeiterBearbeiten(m) {
+    const vorname = window.prompt("Vorname:", m.vorname);
+    if (!vorname) return;
+
+    const nachname = window.prompt("Nachname:", m.nachname);
+    if (!nachname) return;
 
     const { error } = await supabase
-      .from("fahrzeuge")
+      .from("mitarbeiter")
       .update({
-        name: neuerName.trim(),
-        kennzeichen: neuesKennz ? neuesKennz.trim() : ""
+        vorname: vorname.trim(),
+        nachname: nachname.trim()
       })
-      .eq("id", fahrzeug.id);
+      .eq("id", m.id);
 
     if (error) {
       setMeldung("Fehler beim Bearbeiten");
       return;
     }
 
-    setMeldung("Fahrzeug geändert");
-    fahrzeugeLaden();
-    laden();
+    setMeldung("Mitarbeiter geändert");
+    mitarbeiterLaden();
+  }
+
+  async function mitarbeiterAktivAendern(id, aktiv) {
+    const { error } = await supabase
+      .from("mitarbeiter")
+      .update({ aktiv: !aktiv })
+      .eq("id", id);
+
+    if (error) {
+      setMeldung("Fehler beim Ändern");
+      return;
+    }
+
+    mitarbeiterLaden();
+  }
+
+  async function mitarbeiterLoeschen(id) {
+    const sicher = window.confirm("Mitarbeiter wirklich löschen?");
+    if (!sicher) return;
+
+    const { error } = await supabase
+      .from("mitarbeiter")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      setMeldung("Fehler beim Löschen");
+      return;
+    }
+
+    setMeldung("Mitarbeiter gelöscht");
+    mitarbeiterLaden();
   }
 
   async function eintragLoeschen(id) {
@@ -339,24 +429,67 @@ export default function Admin() {
         <header>
           <div className="logo">RIS</div>
           <h1>RIS Admin</h1>
-          <p>Zeiten · Fahrzeuge · GPS · Arbeitsdauer</p>
+          <p>Zeiten · Fahrzeuge · Mitarbeiter · GPS</p>
         </header>
 
         <div className="topActions">
-          <button className="refresh" onClick={() => { laden(); fahrzeugeLaden(); }}>
+          <button className="refresh" onClick={allesLaden}>
             Aktualisieren
           </button>
-          <button className="logout" onClick={logout}>Logout</button>
+          <button className="logout" onClick={logout}>
+            Logout
+          </button>
         </div>
 
         {meldung && <div className="message">{meldung}</div>}
 
-        <section className="vehicleBox">
+        <section className="box">
+          <h2>Mitarbeiter verwalten</h2>
+
+          <div className="formGrid">
+            <input
+              placeholder="Vorname"
+              value={neuerVorname}
+              onChange={(e) => setNeuerVorname(e.target.value)}
+            />
+
+            <input
+              placeholder="Nachname"
+              value={neuerNachname}
+              onChange={(e) => setNeuerNachname(e.target.value)}
+            />
+
+            <button className="add" onClick={mitarbeiterHinzufuegen}>
+              Mitarbeiter hinzufügen
+            </button>
+          </div>
+
+          <div className="gridCards">
+            {mitarbeiter.map((m) => (
+              <div key={m.id} className={m.aktiv ? "miniCard" : "miniCard inactive"}>
+                <strong>{m.vorname} {m.nachname}</strong>
+                <span>{m.aktiv ? "aktiv" : "deaktiviert"}</span>
+
+                <div className="miniButtons">
+                  <button onClick={() => mitarbeiterBearbeiten(m)}>Bearbeiten</button>
+                  <button onClick={() => mitarbeiterAktivAendern(m.id, m.aktiv)}>
+                    {m.aktiv ? "Deaktivieren" : "Aktivieren"}
+                  </button>
+                  <button className="smallDelete" onClick={() => mitarbeiterLoeschen(m.id)}>
+                    Löschen
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="box">
           <h2>Fahrzeuge verwalten</h2>
 
-          <div className="vehicleForm">
+          <div className="formGrid">
             <input
-              placeholder="Fahrzeugname, z. B. Vito 3"
+              placeholder="Fahrzeugname"
               value={neuesFahrzeug}
               onChange={(e) => setNeuesFahrzeug(e.target.value)}
             />
@@ -372,13 +505,13 @@ export default function Admin() {
             </button>
           </div>
 
-          <div className="vehicleGrid">
+          <div className="gridCards">
             {fahrzeuge.map((f) => (
-              <div key={f.id} className={f.aktiv ? "vehicleCard" : "vehicleCard inactive"}>
+              <div key={f.id} className={f.aktiv ? "miniCard" : "miniCard inactive"}>
                 <strong>{f.name}</strong>
                 <span>{f.kennzeichen || "kein Kennzeichen"}</span>
 
-                <div className="vehicleButtons">
+                <div className="miniButtons">
                   <button onClick={() => fahrzeugBearbeiten(f)}>Bearbeiten</button>
                   <button onClick={() => fahrzeugAktivAendern(f.id, f.aktiv)}>
                     {f.aktiv ? "Deaktivieren" : "Aktivieren"}
@@ -460,7 +593,7 @@ export default function Admin() {
 
                   <td>
                     <span className={z.status === "eingestempelt" ? "badge green" : "badge red"}>
-                      {z.status === "eingestempelt" ? "Eingestempelt" : "Ausgestempelt"}
+                      {z.status === "eingestempelt" ? "Abgeholt" : "Abgegeben"}
                     </span>
                   </td>
 
@@ -557,7 +690,7 @@ export default function Admin() {
           margin-bottom: 12px;
         }
 
-        .vehicleBox {
+        .box {
           background: rgba(255,255,255,0.94);
           padding: 18px;
           border-radius: 20px;
@@ -565,61 +698,61 @@ export default function Admin() {
           box-shadow: 0 15px 35px rgba(0,0,0,0.14);
         }
 
-        .vehicleBox h2 {
+        .box h2 {
           margin-top: 0;
         }
 
-        .vehicleForm {
+        .formGrid {
           display: grid;
           grid-template-columns: 1fr 1fr auto;
           gap: 12px;
           margin-bottom: 16px;
         }
 
-        .vehicleForm input {
+        .formGrid input {
           padding: 12px;
           border-radius: 12px;
           border: 1px solid #cbd5e1;
           font-size: 15px;
         }
 
-        .vehicleGrid {
+        .gridCards {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
           gap: 12px;
         }
 
-        .vehicleCard {
+        .miniCard {
           background: #f8fafc;
           border-radius: 16px;
           padding: 14px;
           border-left: 6px solid #16a34a;
         }
 
-        .vehicleCard.inactive {
+        .miniCard.inactive {
           opacity: 0.55;
           border-left-color: #dc2626;
         }
 
-        .vehicleCard strong {
+        .miniCard strong {
           display: block;
           font-size: 18px;
         }
 
-        .vehicleCard span {
+        .miniCard span {
           display: block;
           color: #64748b;
           margin-top: 4px;
           margin-bottom: 10px;
         }
 
-        .vehicleButtons {
+        .miniButtons {
           display: flex;
           flex-wrap: wrap;
           gap: 8px;
         }
 
-        .vehicleButtons button {
+        .miniButtons button {
           border: none;
           background: #0f2f6e;
           color: white;
@@ -628,7 +761,7 @@ export default function Admin() {
           font-weight: bold;
         }
 
-        .vehicleButtons .smallDelete {
+        .miniButtons .smallDelete {
           background: #dc2626;
         }
 
@@ -731,7 +864,7 @@ export default function Admin() {
         }
 
         @media (max-width: 900px) {
-          .vehicleForm,
+          .formGrid,
           .filters {
             grid-template-columns: 1fr;
           }
