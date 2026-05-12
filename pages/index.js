@@ -13,6 +13,7 @@ export default function Home() {
 
   const [fahrzeuge, setFahrzeuge] = useState([]);
   const [fahrzeug, setFahrzeug] = useState("");
+  const [fahrzeugObjekt, setFahrzeugObjekt] = useState(null);
 
   const [status, setStatus] = useState("nicht abgeholt");
 
@@ -203,18 +204,28 @@ export default function Home() {
             <label>Fahrzeug wählen</label>
 
             <select
-              value={fahrzeug}
-              onChange={(e) => setFahrzeug(e.target.value)}
-            >
-              <option value="">Fahrzeug wählen</option>
+  value={fahrzeug}
+  onChange={(e) => {
+    const selected = fahrzeuge.find((f) => f.id === Number(e.target.value));
 
-              {fahrzeuge.map((f) => (
-                <option key={f.id} value={f.name}>
-                  {f.name}
-                  {f.kennzeichen ? ` - ${f.kennzeichen}` : ""}
-                </option>
-              ))}
-            </select>
+    if (!selected) return;
+
+    setFahrzeug(
+      `${selected.name}${selected.kennzeichen ? " · " + selected.kennzeichen : ""}`
+    );
+
+    setFahrzeugObjekt(selected);
+  }}
+>
+  <option value="">Fahrzeug wählen</option>
+
+  {fahrzeuge.map((f) => (
+    <option key={f.id} value={f.id}>
+      {f.name}
+      {f.kennzeichen ? ` - ${f.kennzeichen}` : ""}
+    </option>
+  ))}
+</select>
 
             <button className="green" onClick={abholen}>
               Abholen
