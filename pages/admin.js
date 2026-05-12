@@ -71,12 +71,15 @@ export default function Admin() {
 
   async function login() {
     setMeldung("");
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password: passwort
     });
 
-    if (error) setMeldung("Login fehlgeschlagen");
+    if (error) {
+      setMeldung("Login fehlgeschlagen");
+    }
   }
 
   async function logout() {
@@ -157,7 +160,9 @@ export default function Admin() {
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = `RIS_Flotten_Export_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `RIS_Flotten_Export_${new Date()
+      .toISOString()
+      .slice(0, 10)}.csv`;
     link.click();
 
     URL.revokeObjectURL(url);
@@ -349,13 +354,24 @@ export default function Admin() {
   const gefilterteZeiten = useMemo(() => {
     return zeiten
       .filter((z) => {
-        if (fahrzeugFilter && !String(z.fahrzeug || "").includes(fahrzeugFilter)) return false;
-        if (datumFilter && formatDatum(z.startzeit) !== datumFilter) return false;
-        if (nurAktive && z.status !== "eingestempelt") return false;
+        if (fahrzeugFilter && !String(z.fahrzeug || "").includes(fahrzeugFilter)) {
+          return false;
+        }
+
+        if (datumFilter && formatDatum(z.startzeit) !== datumFilter) {
+          return false;
+        }
+
+        if (nurAktive && z.status !== "eingestempelt") {
+          return false;
+        }
 
         if (suche) {
           const text = `${z.mitarbeiter || ""} ${z.fahrzeug || ""}`.toLowerCase();
-          if (!text.includes(suche.toLowerCase())) return false;
+
+          if (!text.includes(suche.toLowerCase())) {
+            return false;
+          }
         }
 
         return true;
@@ -400,7 +416,13 @@ export default function Admin() {
           .page {
             min-height: 100vh;
             font-family: Arial, sans-serif;
-            background: linear-gradient(90deg, #2f5fb3 0%, #4f7fd8 42%, #f3a24d 72%, #ef7d22 100%);
+            background: linear-gradient(
+              90deg,
+              #2f5fb3 0%,
+              #4f7fd8 42%,
+              #f3a24d 72%,
+              #ef7d22 100%
+            );
           }
 
           .loginPage {
@@ -476,12 +498,109 @@ export default function Admin() {
         </header>
 
         <div className="topActions">
-          <button className="refresh" onClick={allesLaden}>Aktualisieren</button>
-          <button className="export" onClick={csvExportieren}>CSV Export</button>
-          <button className="logout" onClick={logout}>Logout</button>
+          <button className="refresh" onClick={allesLaden}>
+            Aktualisieren
+          </button>
+          <button className="export" onClick={csvExportieren}>
+            CSV Export
+          </button>
+          <button className="logout" onClick={logout}>
+            Logout
+          </button>
         </div>
 
         {meldung && <div className="message">{meldung}</div>}
+
+        <div className="filters">
+          <input
+            placeholder="Suche Mitarbeiter/Fahrzeug/Kennzeichen"
+            value={suche}
+            onChange={(e) => setSuche(e.target.value)}
+          />
+
+          <select value={fahrzeugFilter} onChange={(e) => setFahrzeugFilter(e.target.value)}>
+            <option value="">Alle Fahrzeuge</option>
+            {fahrzeugNamen.map((f) => (
+              <option key={f} value={f}>
+                {f}
+              </option>
+            ))}
+          </select>
+
+          <input
+            type="date"
+            value={datumFilter}
+            onChange={(e) => setDatumFilter(e.target.value)}
+          />
+
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={nurAktive}
+              onChange={(e) => setNurAktive(e.target.checked)}
+            />
+            Nur aktive
+          </label>
+        </div>
+
+        <div className="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Fahrzeug</th>
+                <th>Mitarbeiter</th>
+                <th>Start</th>
+                <th>Ende</th>
+                <th>Dauer</th>
+                <th>GPS</th>
+                <th>Status</th>
+                <th>Aktion</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {gefilterteZeiten.map((z) => (
+                <tr key={z.id}>
+                  <td>{formatZeit(z.startzeit).split(",")[0]}</td>
+                  <td>
+                    <strong>{z.fahrzeug}</strong>
+                  </td>
+                  <td>{z.mitarbeiter}</td>
+                  <td>{formatZeit(z.startzeit)}</td>
+                  <td>{formatZeit(z.endzeit)}</td>
+                  <td>{dauer(z.startzeit, z.endzeit)}</td>
+
+                  <td>
+                    {z.latitude && z.longitude ? (
+                      <a
+                        href={`https://www.google.com/maps?q=${z.latitude},${z.longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Karte öffnen
+                      </a>
+                    ) : (
+                      <span className="muted">GPS deaktiviert</span>
+                    )}
+                  </td>
+
+                  <td>
+                    <span className={z.status === "eingestempelt" ? "badge green" : "badge red"}>
+                      {z.status === "eingestempelt" ? "Abgeholt" : "Abgegeben"}
+                    </span>
+                  </td>
+
+                  <td>
+                    <button className="delete" onClick={() => eintragLoeschen(z.id)}>
+                      Löschen
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         <section className="box">
           <h2>Mitarbeiter verwalten</h2>
@@ -507,7 +626,9 @@ export default function Admin() {
           <div className="gridCards">
             {mitarbeiter.map((m) => (
               <div key={m.id} className={m.aktiv ? "miniCard" : "miniCard inactive"}>
-                <strong>{m.vorname} {m.nachname}</strong>
+                <strong>
+                  {m.vorname} {m.nachname}
+                </strong>
                 <span>{m.aktiv ? "aktiv" : "deaktiviert"}</span>
 
                 <div className="miniButtons">
@@ -565,89 +686,6 @@ export default function Admin() {
           </div>
         </section>
 
-        <div className="filters">
-          <input
-            placeholder="Suche Mitarbeiter/Fahrzeug/Kennzeichen"
-            value={suche}
-            onChange={(e) => setSuche(e.target.value)}
-          />
-
-          <select value={fahrzeugFilter} onChange={(e) => setFahrzeugFilter(e.target.value)}>
-            <option value="">Alle Fahrzeuge</option>
-            {fahrzeugNamen.map((f) => (
-              <option key={f} value={f}>{f}</option>
-            ))}
-          </select>
-
-          <input type="date" value={datumFilter} onChange={(e) => setDatumFilter(e.target.value)} />
-
-          <label className="check">
-            <input
-              type="checkbox"
-              checked={nurAktive}
-              onChange={(e) => setNurAktive(e.target.checked)}
-            />
-            Nur aktive
-          </label>
-        </div>
-
-        <div className="tableWrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Datum</th>
-                <th>Fahrzeug</th>
-                <th>Mitarbeiter</th>
-                <th>Start</th>
-                <th>Ende</th>
-                <th>Dauer</th>
-                <th>GPS</th>
-                <th>Status</th>
-                <th>Aktion</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {gefilterteZeiten.map((z) => (
-                <tr key={z.id}>
-                  <td>{formatZeit(z.startzeit).split(",")[0]}</td>
-                  <td><strong>{z.fahrzeug}</strong></td>
-                  <td>{z.mitarbeiter}</td>
-                  <td>{formatZeit(z.startzeit)}</td>
-                  <td>{formatZeit(z.endzeit)}</td>
-                  <td>{dauer(z.startzeit, z.endzeit)}</td>
-
-                  <td>
-                    {z.latitude && z.longitude ? (
-                      <a
-                        href={`https://www.google.com/maps?q=${z.latitude},${z.longitude}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Karte öffnen
-                      </a>
-                    ) : (
-                      <span className="muted">GPS deaktiviert</span>
-                    )}
-                  </td>
-
-                  <td>
-                    <span className={z.status === "eingestempelt" ? "badge green" : "badge red"}>
-                      {z.status === "eingestempelt" ? "Abgeholt" : "Abgegeben"}
-                    </span>
-                  </td>
-
-                  <td>
-                    <button className="delete" onClick={() => eintragLoeschen(z.id)}>
-                      Löschen
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
         <footer>© RIS 2026</footer>
       </div>
 
@@ -656,7 +694,13 @@ export default function Admin() {
           min-height: 100vh;
           padding: 24px;
           font-family: Arial, sans-serif;
-          background: linear-gradient(90deg, #2f5fb3 0%, #4f7fd8 42%, #f3a24d 72%, #ef7d22 100%);
+          background: linear-gradient(
+            90deg,
+            #2f5fb3 0%,
+            #4f7fd8 42%,
+            #f3a24d 72%,
+            #ef7d22 100%
+          );
           color: #0f2f6e;
         }
 
@@ -736,6 +780,67 @@ export default function Admin() {
           margin-bottom: 12px;
         }
 
+        .filters {
+          display: grid;
+          grid-template-columns: 1.4fr 1fr 1fr auto;
+          gap: 12px;
+          margin-bottom: 18px;
+          background: rgba(255,255,255,0.22);
+          backdrop-filter: blur(14px);
+          padding: 14px;
+          border-radius: 18px;
+        }
+
+        .filters input,
+        .filters select {
+          padding: 12px;
+          border-radius: 12px;
+          border: none;
+          font-size: 15px;
+        }
+
+        .check {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: white;
+          padding: 10px 12px;
+          border-radius: 12px;
+          font-weight: bold;
+        }
+
+        .tableWrap {
+          overflow-x: auto;
+          background: rgba(255,255,255,0.96);
+          border-radius: 20px;
+          box-shadow: 0 15px 35px rgba(0,0,0,0.18);
+          margin-bottom: 22px;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          min-width: 1100px;
+        }
+
+        th {
+          background: #0f2f6e;
+          color: white;
+          padding: 14px;
+          text-align: left;
+        }
+
+        td {
+          padding: 14px;
+          border-bottom: 1px solid #e5e7eb;
+        }
+
+        a {
+          color: #0f2f6e;
+          font-weight: bold;
+          text-decoration: underline;
+        }
+
         .box {
           background: rgba(255,255,255,0.94);
           padding: 18px;
@@ -809,66 +914,6 @@ export default function Admin() {
 
         .miniButtons .smallDelete {
           background: #dc2626;
-        }
-
-        .filters {
-          display: grid;
-          grid-template-columns: 1.4fr 1fr 1fr auto;
-          gap: 12px;
-          margin-bottom: 18px;
-          background: rgba(255,255,255,0.22);
-          backdrop-filter: blur(14px);
-          padding: 14px;
-          border-radius: 18px;
-        }
-
-        .filters input,
-        .filters select {
-          padding: 12px;
-          border-radius: 12px;
-          border: none;
-          font-size: 15px;
-        }
-
-        .check {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          background: white;
-          padding: 10px 12px;
-          border-radius: 12px;
-          font-weight: bold;
-        }
-
-        .tableWrap {
-          overflow-x: auto;
-          background: rgba(255,255,255,0.96);
-          border-radius: 20px;
-          box-shadow: 0 15px 35px rgba(0,0,0,0.18);
-        }
-
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          min-width: 1100px;
-        }
-
-        th {
-          background: #0f2f6e;
-          color: white;
-          padding: 14px;
-          text-align: left;
-        }
-
-        td {
-          padding: 14px;
-          border-bottom: 1px solid #e5e7eb;
-        }
-
-        a {
-          color: #0f2f6e;
-          font-weight: bold;
-          text-decoration: underline;
         }
 
         .muted {
