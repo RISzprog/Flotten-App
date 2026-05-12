@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -7,26 +7,56 @@ const supabase = createClient(
 );
 
 export default function Home() {
+  const [mitarbeiter, setMitarbeiter] = useState([]);
+  const [mitarbeiterSuche, setMitarbeiterSuche] = useState("");
   const [name, setName] = useState("");
-  const [fahrzeug, setFahrzeug] = useState("");
-  const [status, setStatus] = useState("nicht eingestempelt");
-  const [fahrzeuge, setFahrzeuge] = useState([]);
 
-  async function fahrzeugeLaden() {
-    const { data, error } = await supabase
+  const [fahrzeuge, setFahrzeuge] = useState([]);
+  const [fahrzeug, setFahrzeug] = useState("");
+
+  const [status, setStatus] = useState("nicht abgeholt");
+
+  async function datenLaden() {
+    const { data: fahrzeugDaten } = await supabase
       .from("fahrzeuge")
       .select("*")
       .eq("aktiv", true)
       .order("name", { ascending: true });
 
-    if (!error) {
-      setFahrzeuge(data || []);
-    }
+    const { data: mitarbeiterDaten } = await supabase
+      .from("mitarbeiter")
+      .select("*")
+      .eq("aktiv", true)
+      .order("nachname", { ascending: true });
+
+    setFahrzeuge(fahrzeugDaten || []);
+    setMitarbeiter(mitarbeiterDaten || []);
   }
 
   useEffect(() => {
-    fahrzeugeLaden();
+    datenLaden();
   }, []);
+
+  const vorschlaege = useMemo(() => {
+    if (mitarbeiterSuche.trim().length < 2) return [];
+
+    const suche = mitarbeiterSuche.toLowerCase();
+
+    return mitarbeiter
+      .filter((m) => {
+        const vollname = `${m.vorname} ${m.nachname}`.toLowerCase();
+        const rueckwaerts = `${m.nachname} ${m.vorname}`.toLowerCase();
+
+        return vollname.includes(suche) || rueckwaerts.includes(suche);
+      })
+      .slice(0, 6);
+  }, [mitarbeiterSuche, mitarbeiter]);
+
+  function mitarbeiterAuswaehlen(m) {
+    const vollname = `${m.vorname} ${m.nachname}`;
+    setName(vollname);
+    setMitarbeiterSuche(vollname);
+  }
 
   async function speichern(gpsDaten) {
     const daten = {
@@ -45,12 +75,12 @@ export default function Home() {
       return;
     }
 
-    setStatus("🟢 Eingestempelt");
+    setStatus("🟢 Abgeholt");
   }
 
-  async function einstempeln() {
+  async function abholen() {
     if (!name || !fahrzeug) {
-      setStatus("Bitte Name und Fahrzeug auswählen.");
+      setStatus("Bitte Mitarbeiter und Fahrzeug auswählen.");
       return;
     }
 
@@ -65,7 +95,7 @@ export default function Home() {
     }
 
     if (data && data.some((e) => e.mitarbeiter === name)) {
-      setStatus("🚫 Mitarbeiter bereits eingestempelt");
+      setStatus("🚫 Mitarbeiter hat bereits ein Fahrzeug");
       return;
     }
 
@@ -84,7 +114,7 @@ export default function Home() {
         });
       },
       function () {
-        setStatus("GPS deaktiviert - trotzdem eingestempelt");
+        setStatus("GPS deaktiviert - trotzdem abgeholt");
         speichern(null);
       },
       {
@@ -95,9 +125,9 @@ export default function Home() {
     );
   }
 
-  async function ausstempeln() {
+  async function abgeben() {
     if (!name) {
-      setStatus("Bitte Mitarbeitername eingeben.");
+      setStatus("Bitte Mitarbeiter auswählen.");
       return;
     }
 
@@ -110,7 +140,7 @@ export default function Home() {
       .limit(1);
 
     if (!data || data.length === 0) {
-      setStatus("Keine aktive Einstempelung gefunden");
+      setStatus("Kein aktives Fahrzeug gefunden");
       return;
     }
 
@@ -125,11 +155,11 @@ export default function Home() {
       .eq("id", eintrag.id);
 
     if (error) {
-      setStatus("Fehler beim Ausstempeln");
+      setStatus("Fehler beim Abgeben");
       return;
     }
 
-    setStatus("🔴 Ausgestempelt");
+    setStatus("🔴 Abgegeben");
   }
 
   return (
@@ -142,13 +172,33 @@ export default function Home() {
 
         <main>
           <section className="card">
-            <label>Mitarbeiter wählen</label>
+            <label>Mitarbeiter suchen</label>
 
-            <input
-              placeholder="Mitarbeitername"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+            <div className="searchBox">
+              <input
+                placeholder="Vorname oder Nachname eingeben"
+                value={mitarbeiterSuche}
+                onChange={(e) => {
+                  setMitarbeiterSuche(e.target.value);
+                  setName("");
+                }}
+              />
+
+              {vorschlaege.length > 0 && !name && (
+                <div className="suggestions">
+                  {vorschlaege.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      className="suggestion"
+                      onClick={() => mitarbeiterAuswaehlen(m)}
+                    >
+                      {m.vorname} {m.nachname}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <label>Fahrzeug wählen</label>
 
@@ -166,12 +216,12 @@ export default function Home() {
               ))}
             </select>
 
-            <button className="green" onClick={einstempeln}>
-              Einstempeln
+            <button className="green" onClick={abholen}>
+              Abholen
             </button>
 
-            <button className="red" onClick={ausstempeln}>
-              Ausstempeln
+            <button className="red" onClick={abgeben}>
+              Abgeben
             </button>
 
             <div className="status">Status: {status}</div>
@@ -251,6 +301,10 @@ export default function Home() {
           margin-bottom: 8px;
         }
 
+        .searchBox {
+          position: relative;
+        }
+
         input,
         select {
           width: 100%;
@@ -270,6 +324,30 @@ export default function Home() {
 
         option {
           color: black;
+        }
+
+        .suggestions {
+          position: absolute;
+          top: 58px;
+          left: 0;
+          right: 0;
+          background: white;
+          border-radius: 14px;
+          overflow: hidden;
+          box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+          z-index: 20;
+        }
+
+        .suggestion {
+          width: 100%;
+          padding: 14px 16px;
+          text-align: left;
+          border: none;
+          background: white;
+          color: #0f2f6e;
+          font-size: 18px;
+          font-weight: bold;
+          border-bottom: 1px solid #e5e7eb;
         }
 
         button {
