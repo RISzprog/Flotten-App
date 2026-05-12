@@ -6,11 +6,8 @@ const supabase = createClient(
   "sb_publishable_URHTzamjcI6_j1dt0uTTlQ_GezlUHTw"
 );
 
-const ADMIN_PASSWORT = "RIS2026";
-
 function formatZeit(value) {
   if (!value) return "-";
-
   return new Date(value).toLocaleString("de-DE", {
     day: "2-digit",
     month: "2-digit",
@@ -22,32 +19,64 @@ function formatZeit(value) {
 
 function formatDatum(value) {
   if (!value) return "";
-
   return new Date(value).toISOString().slice(0, 10);
 }
 
 function dauer(start, ende) {
   if (!start || !ende) return "-";
-
   const diff = new Date(ende) - new Date(start);
   const minuten = Math.floor(diff / 60000);
   const stunden = Math.floor(minuten / 60);
   const rest = minuten % 60;
-
   return `${stunden}h ${rest}min`;
 }
 
 export default function Admin() {
+  const [session, setSession] = useState(null);
+  const [email, setEmail] = useState("");
+  const [passwort, setPasswort] = useState("");
   const [zeiten, setZeiten] = useState([]);
   const [meldung, setMeldung] = useState("");
-
-  const [passwort, setPasswort] = useState("");
-  const [eingeloggt, setEingeloggt] = useState(false);
 
   const [fahrzeugFilter, setFahrzeugFilter] = useState("");
   const [datumFilter, setDatumFilter] = useState("");
   const [nurAktive, setNurAktive] = useState(false);
   const [suche, setSuche] = useState("");
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      if (data.session) laden();
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      if (newSession) laden();
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  async function login() {
+    setMeldung("");
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password: passwort
+    });
+
+    if (error) {
+      setMeldung("Login fehlgeschlagen");
+      return;
+    }
+  }
+
+  async function logout() {
+    await supabase.auth.signOut();
+    setSession(null);
+  }
 
   async function laden() {
     const { data, error } = await supabase
@@ -62,7 +91,6 @@ export default function Admin() {
 
   async function loeschen(id) {
     const sicher = window.confirm("Diesen Eintrag wirklich löschen?");
-
     if (!sicher) return;
 
     const { error } = await supabase
@@ -79,21 +107,8 @@ export default function Admin() {
     laden();
   }
 
-  function login() {
-    if (passwort === ADMIN_PASSWORT) {
-      setEingeloggt(true);
-      setMeldung("");
-      laden();
-    } else {
-      setMeldung("Falsches Passwort");
-    }
-  }
-
   const fahrzeuge = useMemo(() => {
-    const liste = zeiten
-      .map((z) => z.fahrzeug)
-      .filter(Boolean);
-
+    const liste = zeiten.map((z) => z.fahrzeug).filter(Boolean);
     return [...new Set(liste)].sort();
   }, [zeiten]);
 
@@ -122,22 +137,23 @@ export default function Admin() {
       });
   }, [zeiten, fahrzeugFilter, datumFilter, nurAktive, suche]);
 
-  useEffect(() => {
-    if (eingeloggt) {
-      laden();
-    }
-  }, [eingeloggt]);
-
-  if (!eingeloggt) {
+  if (!session) {
     return (
-      <div className="page">
+      <div className="page loginPage">
         <div className="loginBox">
           <div className="logo">RIS</div>
           <h1>Admin Login</h1>
 
           <input
+            type="email"
+            placeholder="Admin Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <input
             type="password"
-            placeholder="Admin Passwort"
+            placeholder="Passwort"
             value={passwort}
             onChange={(e) => setPasswort(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && login()}
@@ -151,15 +167,19 @@ export default function Admin() {
         <style jsx>{`
           .page {
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             font-family: Arial, sans-serif;
             background: linear-gradient(90deg, #2f5fb3 0%, #4f7fd8 42%, #f3a24d 72%, #ef7d22 100%);
           }
 
+          .loginPage {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+          }
+
           .loginBox {
-            background: rgba(255,255,255,0.92);
+            background: rgba(255,255,255,0.94);
             padding: 28px;
             border-radius: 24px;
             width: 360px;
@@ -186,7 +206,7 @@ export default function Admin() {
           input {
             width: 100%;
             padding: 14px;
-            margin: 16px 0;
+            margin: 10px 0;
             font-size: 18px;
             border-radius: 12px;
             border: 1px solid #cbd5e1;
@@ -202,6 +222,7 @@ export default function Admin() {
             color: white;
             font-size: 18px;
             font-weight: bold;
+            margin-top: 10px;
           }
 
           .error {
@@ -229,21 +250,14 @@ export default function Admin() {
             onChange={(e) => setSuche(e.target.value)}
           />
 
-          <select
-            value={fahrzeugFilter}
-            onChange={(e) => setFahrzeugFilter(e.target.value)}
-          >
+          <select value={fahrzeugFilter} onChange={(e) => setFahrzeugFilter(e.target.value)}>
             <option value="">Alle Fahrzeuge</option>
             {fahrzeuge.map((f) => (
               <option key={f} value={f}>{f}</option>
             ))}
           </select>
 
-          <input
-            type="date"
-            value={datumFilter}
-            onChange={(e) => setDatumFilter(e.target.value)}
-          />
+          <input type="date" value={datumFilter} onChange={(e) => setDatumFilter(e.target.value)} />
 
           <label className="check">
             <input
@@ -254,9 +268,8 @@ export default function Admin() {
             Nur aktive
           </label>
 
-          <button className="refresh" onClick={laden}>
-            Aktualisieren
-          </button>
+          <button className="refresh" onClick={laden}>Aktualisieren</button>
+          <button className="logout" onClick={logout}>Logout</button>
         </div>
 
         {meldung && <div className="message">{meldung}</div>}
@@ -369,7 +382,7 @@ export default function Admin() {
 
         .filters {
           display: grid;
-          grid-template-columns: 1.4fr 1fr 1fr auto auto;
+          grid-template-columns: 1.4fr 1fr 1fr auto auto auto;
           gap: 12px;
           margin-bottom: 18px;
           background: rgba(255,255,255,0.22);
@@ -398,6 +411,15 @@ export default function Admin() {
 
         .refresh {
           background: #0f2f6e;
+          color: white;
+          border: none;
+          padding: 12px 18px;
+          border-radius: 12px;
+          font-weight: bold;
+        }
+
+        .logout {
+          background: #dc2626;
           color: white;
           border: none;
           padding: 12px 18px;
