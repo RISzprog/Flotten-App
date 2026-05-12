@@ -604,3 +604,117 @@ export default function Admin() {
             </strong>
           </div>
         </div>
+        <div className="filters">
+          <input
+            placeholder="Suche Mitarbeiter/Fahrzeug/Kennzeichen"
+            value={suche}
+            onChange={(e) => setSuche(e.target.value)}
+          />
+
+          <select value={fahrzeugFilter} onChange={(e) => setFahrzeugFilter(e.target.value)}>
+            <option value="">Alle Fahrzeuge</option>
+            {fahrzeugNamen.map((f) => (
+              <option key={f} value={f}>{f}</option>
+            ))}
+          </select>
+
+          <input type="date" value={datumFilter} onChange={(e) => setDatumFilter(e.target.value)} />
+
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={nurAktive}
+              onChange={(e) => setNurAktive(e.target.checked)}
+            />
+            Nur aktive
+          </label>
+        </div>
+
+        <div className="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Fahrzeug</th>
+                <th>Mitarbeiter</th>
+                <th>Start</th>
+                <th>Ende</th>
+                <th>Dauer</th>
+                <th>GPS</th>
+                <th>Status</th>
+                <th>Aktion</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {gefilterteZeiten.map((z) => (
+                <tr key={z.id}>
+                  <td>{formatZeit(z.startzeit).split(",")[0]}</td>
+                  <td><strong>{z.fahrzeug}</strong></td>
+                  <td>{z.mitarbeiter}</td>
+                  <td>{formatZeit(z.startzeit)}</td>
+                  <td>{formatZeit(z.endzeit)}</td>
+                  <td>{dauer(z.startzeit, z.endzeit)}</td>
+                  <td>
+                    {z.latitude && z.longitude ? (
+                      <a href={`https://www.google.com/maps?q=${z.latitude},${z.longitude}`} target="_blank" rel="noopener noreferrer">
+                        Karte öffnen
+                      </a>
+                    ) : (
+                      <span className="muted">GPS deaktiviert</span>
+                    )}
+                  </td>
+                  <td>
+                    <span className={z.status === "eingestempelt" ? "badge green" : "badge red"}>
+                      {z.status === "eingestempelt" ? "Abgeholt" : "Abgegeben"}
+                    </span>
+                  </td>
+                  <td>
+                    <button className="delete" onClick={() => eintragLoeschen(z.id)}>
+                      Löschen
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <footer>© RIS 2026</footer>
+      </div>
+
+      <style jsx>{`
+        .page { min-height: 100vh; padding: 24px; font-family: Arial, sans-serif; background: linear-gradient(90deg, #2f5fb3 0%, #4f7fd8 42%, #f3a24d 72%, #ef7d22 100%); color: #0f2f6e; }
+        .wrap { max-width: 1300px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 24px; color: white; }
+        .logo { margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; width: 86px; height: 50px; border-radius: 14px; background: white; color: #0f2f6e; font-size: 30px; font-weight: 900; border-bottom: 5px solid #f97316; }
+        h1 { margin: 0; font-size: 42px; font-weight: 900; }
+        .topActions { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+        .refresh, .logout, .export { border: none; padding: 12px 18px; border-radius: 12px; font-weight: bold; color: white; }
+        .refresh { background: #0f2f6e; }
+        .export { background: #16a34a; }
+        .logout, .delete { background: #dc2626; }
+        .message { background: white; padding: 10px 14px; border-radius: 10px; font-weight: bold; margin-bottom: 12px; }
+        .dashboardGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 22px; }
+        .dashboardCard { background: rgba(255,255,255,0.94); border-radius: 22px; padding: 22px; box-shadow: 0 15px 35px rgba(0,0,0,0.14); display: flex; flex-direction: column; gap: 12px; }
+        .dashboardCard span { color: #64748b; font-size: 15px; font-weight: bold; }
+        .dashboardCard strong { font-size: 30px; color: #0f2f6e; }
+        .filters { display: grid; grid-template-columns: 1.4fr 1fr 1fr auto; gap: 12px; margin-bottom: 18px; background: rgba(255,255,255,0.22); backdrop-filter: blur(14px); padding: 14px; border-radius: 18px; }
+        .filters input, .filters select { padding: 12px; border-radius: 12px; border: none; font-size: 15px; }
+        .check { display: flex; align-items: center; gap: 8px; background: white; padding: 10px 12px; border-radius: 12px; font-weight: bold; }
+        .tableWrap { overflow-x: auto; background: rgba(255,255,255,0.96); border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.18); margin-bottom: 22px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+        th { background: #0f2f6e; color: white; padding: 14px; text-align: left; }
+        td { padding: 14px; border-bottom: 1px solid #e5e7eb; }
+        a { color: #0f2f6e; font-weight: bold; text-decoration: underline; }
+        .muted { color: #64748b; font-weight: bold; }
+        .badge { display: inline-block; color: white; padding: 7px 12px; border-radius: 999px; font-weight: bold; font-size: 14px; }
+        .green { background: #16a34a; }
+        .red { background: #dc2626; }
+        .delete { color: white; border: none; padding: 8px 12px; border-radius: 10px; font-weight: bold; }
+        footer { text-align: center; margin-top: 36px; font-weight: bold; color: white; }
+        @media (max-width: 900px) { .filters { grid-template-columns: 1fr; } }
+      `}</style>
+    </div>
+  );
+}
