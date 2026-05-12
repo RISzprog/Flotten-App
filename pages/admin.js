@@ -71,15 +71,12 @@ export default function Admin() {
 
   async function login() {
     setMeldung("");
-
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password: passwort
     });
 
-    if (error) {
-      setMeldung("Login fehlgeschlagen");
-    }
+    if (error) setMeldung("Login fehlgeschlagen");
   }
 
   async function logout() {
@@ -118,6 +115,52 @@ export default function Admin() {
       .order("nachname", { ascending: true });
 
     if (!error) setMitarbeiter(data || []);
+  }
+
+  function csvExportieren() {
+    const kopf = [
+      "Datum",
+      "Fahrzeug",
+      "Mitarbeiter",
+      "Start",
+      "Ende",
+      "Dauer",
+      "GPS",
+      "Status"
+    ];
+
+    const zeilen = gefilterteZeiten.map((z) => [
+      formatZeit(z.startzeit).split(",")[0],
+      z.fahrzeug || "",
+      z.mitarbeiter || "",
+      formatZeit(z.startzeit),
+      formatZeit(z.endzeit),
+      dauer(z.startzeit, z.endzeit),
+      z.latitude && z.longitude
+        ? `https://www.google.com/maps?q=${z.latitude},${z.longitude}`
+        : "GPS deaktiviert",
+      z.status === "eingestempelt" ? "Abgeholt" : "Abgegeben"
+    ]);
+
+    const csv =
+      "\uFEFF" +
+      [kopf, ...zeilen]
+        .map((reihe) =>
+          reihe
+            .map((feld) => `"${String(feld).replaceAll('"', '""')}"`)
+            .join(";")
+        )
+        .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `RIS_Flotten_Export_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+
+    URL.revokeObjectURL(url);
   }
 
   async function fahrzeugHinzufuegen() {
@@ -306,7 +349,7 @@ export default function Admin() {
   const gefilterteZeiten = useMemo(() => {
     return zeiten
       .filter((z) => {
-        if (fahrzeugFilter && z.fahrzeug !== fahrzeugFilter) return false;
+        if (fahrzeugFilter && !String(z.fahrzeug || "").includes(fahrzeugFilter)) return false;
         if (datumFilter && formatDatum(z.startzeit) !== datumFilter) return false;
         if (nurAktive && z.status !== "eingestempelt") return false;
 
@@ -433,12 +476,9 @@ export default function Admin() {
         </header>
 
         <div className="topActions">
-          <button className="refresh" onClick={allesLaden}>
-            Aktualisieren
-          </button>
-          <button className="logout" onClick={logout}>
-            Logout
-          </button>
+          <button className="refresh" onClick={allesLaden}>Aktualisieren</button>
+          <button className="export" onClick={csvExportieren}>CSV Export</button>
+          <button className="logout" onClick={logout}>Logout</button>
         </div>
 
         {meldung && <div className="message">{meldung}</div>}
@@ -527,7 +567,7 @@ export default function Admin() {
 
         <div className="filters">
           <input
-            placeholder="Suche Mitarbeiter/Fahrzeug"
+            placeholder="Suche Mitarbeiter/Fahrzeug/Kennzeichen"
             value={suche}
             onChange={(e) => setSuche(e.target.value)}
           />
@@ -661,11 +701,13 @@ export default function Admin() {
           display: flex;
           gap: 12px;
           margin-bottom: 18px;
+          flex-wrap: wrap;
         }
 
         .refresh,
         .logout,
-        .add {
+        .add,
+        .export {
           border: none;
           padding: 12px 18px;
           border-radius: 12px;
@@ -676,6 +718,10 @@ export default function Admin() {
         .refresh,
         .add {
           background: #0f2f6e;
+        }
+
+        .export {
+          background: #16a34a;
         }
 
         .logout {
