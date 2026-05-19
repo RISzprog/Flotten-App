@@ -506,6 +506,17 @@ export default function Admin() {
             <strong>
               {zeiten.filter((z) => z.status === "eingestempelt").length}
             </strong>
+             <div className="liveList">
+  {zeiten
+    .filter((z) => z.status === "eingestempelt")
+    .map((z) => (
+      <div key={z.id}>
+        {z.mitarbeiter}
+        {" → "}
+        {z.fahrzeug}
+      </div>
+    ))}
+</div> 
           </div>
 
           <div className="dashboardCard">
