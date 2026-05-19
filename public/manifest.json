@@ -1,7 +1,6 @@
 {
-  "name": "RIS Flotten App",
-  "short_name": "RIS Flotte",
-  "description": "RIS Fahrzeugverwaltung",
+  "name": "RIS Fleet",
+  "short_name": "RIS",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f2f6e",
