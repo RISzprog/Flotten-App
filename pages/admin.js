@@ -22,10 +22,22 @@ function formatDatum(value) {
   return new Date(value).toISOString().slice(0, 10);
 }
 
-function dauer(start, ende) {
-  if (!start || !ende) return "-";
-  const diff = new Date(ende) - new Date(start);
-  const minuten = Math.floor(diff / 60000);
+function dauerMinuten(start, ende) {
+  if (!start || !ende) return 0;
+  return Math.floor((new Date(ende) - new Date(start)) / 60000);
+}
+
+function dauerText(start, ende) {
+  const minuten = dauerMinuten(start, ende);
+  if (!minuten) return "-";
+
+  const stunden = Math.floor(minuten / 60);
+  const rest = minuten % 60;
+
+  return `${stunden}h ${rest}min`;
+}
+
+function minutenZuText(minuten) {
   const stunden = Math.floor(minuten / 60);
   const rest = minuten % 60;
   return `${stunden}h ${rest}min`;
@@ -61,10 +73,12 @@ export default function Admin() {
       if (data.session) allesLaden();
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-      if (newSession) allesLaden();
-    });
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, newSession) => {
+        setSession(newSession);
+        if (newSession) allesLaden();
+      }
+    );
 
     return () => {
       listener.subscription.unsubscribe();
@@ -73,6 +87,7 @@ export default function Admin() {
 
   async function login() {
     setMeldung("");
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password: passwort
@@ -121,9 +136,7 @@ export default function Admin() {
 
   function fahrzeugLink(f) {
     const basis =
-      typeof window !== "undefined"
-        ? window.location.origin
-        : "";
+      typeof window !== "undefined" ? window.location.origin : "";
 
     const code = f.kennzeichen || f.name;
 
@@ -137,7 +150,16 @@ export default function Admin() {
   }
 
   function csvExportieren() {
-    const kopf = ["Datum", "Fahrzeug", "Mitarbeiter", "Start", "Ende", "Dauer", "GPS", "Status"];
+    const kopf = [
+      "Datum",
+      "Fahrzeug",
+      "Mitarbeiter",
+      "Start",
+      "Ende",
+      "Dauer",
+      "GPS",
+      "Status"
+    ];
 
     const zeilen = gefilterteZeiten.map((z) => [
       formatZeit(z.startzeit).split(",")[0],
@@ -145,7 +167,7 @@ export default function Admin() {
       z.mitarbeiter || "",
       formatZeit(z.startzeit),
       formatZeit(z.endzeit),
-      dauer(z.startzeit, z.endzeit),
+      dauerText(z.startzeit, z.endzeit),
       z.latitude && z.longitude
         ? `https://www.google.com/maps?q=${z.latitude},${z.longitude}`
         : "GPS deaktiviert",
@@ -156,16 +178,22 @@ export default function Admin() {
       "\uFEFF" +
       [kopf, ...zeilen]
         .map((reihe) =>
-          reihe.map((feld) => `"${String(feld).replaceAll('"', '""')}"`).join(";")
+          reihe
+            .map((feld) => `"${String(feld).replaceAll('"', '""')}"`)
+            .join(";")
         )
         .join("\n");
 
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
+
     const link = document.createElement("a");
     link.href = url;
-    link.download = `RIS_Flotten_Export_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `RIS_Flotten_Export_${new Date()
+      .toISOString()
+      .slice(0, 10)}.csv`;
     link.click();
+
     URL.revokeObjectURL(url);
   }
 
@@ -201,7 +229,10 @@ export default function Admin() {
     if (!neuerName) return;
 
     const neuesKennz = window.prompt("Kennzeichen:", f.kennzeichen || "");
-    const neueKat = window.prompt("Kategorie: PKW, Transporter oder Anhänger", f.kategorie || "PKW");
+    const neueKat = window.prompt(
+      "Kategorie: PKW, Transporter oder Anhänger",
+      f.kategorie || "PKW"
+    );
 
     await supabase
       .from("fahrzeuge")
@@ -216,12 +247,17 @@ export default function Admin() {
   }
 
   async function fahrzeugAktivAendern(id, aktiv) {
-    await supabase.from("fahrzeuge").update({ aktiv: !aktiv }).eq("id", id);
+    await supabase
+      .from("fahrzeuge")
+      .update({ aktiv: !aktiv })
+      .eq("id", id);
+
     fahrzeugeLaden();
   }
 
   async function fahrzeugLoeschen(id) {
     if (!window.confirm("Fahrzeug wirklich löschen?")) return;
+
     await supabase.from("fahrzeuge").delete().eq("id", id);
     fahrzeugeLaden();
   }
@@ -244,8 +280,7 @@ export default function Admin() {
     setNeuerNachname("");
     mitarbeiterLaden();
   }
-
-  async function mitarbeiterBearbeiten(m) {
+    async function mitarbeiterBearbeiten(m) {
     const vorname = window.prompt("Vorname:", m.vorname);
     if (!vorname) return;
 
@@ -254,25 +289,34 @@ export default function Admin() {
 
     await supabase
       .from("mitarbeiter")
-      .update({ vorname: vorname.trim(), nachname: nachname.trim() })
+      .update({
+        vorname: vorname.trim(),
+        nachname: nachname.trim()
+      })
       .eq("id", m.id);
 
     mitarbeiterLaden();
   }
 
   async function mitarbeiterAktivAendern(id, aktiv) {
-    await supabase.from("mitarbeiter").update({ aktiv: !aktiv }).eq("id", id);
+    await supabase
+      .from("mitarbeiter")
+      .update({ aktiv: !aktiv })
+      .eq("id", id);
+
     mitarbeiterLaden();
   }
 
   async function mitarbeiterLoeschen(id) {
     if (!window.confirm("Mitarbeiter wirklich löschen?")) return;
+
     await supabase.from("mitarbeiter").delete().eq("id", id);
     mitarbeiterLaden();
   }
 
   async function eintragLoeschen(id) {
     if (!window.confirm("Diesen Eintrag löschen?")) return;
+
     await supabase.from("zeiten").delete().eq("id", id);
     laden();
   }
@@ -295,6 +339,34 @@ export default function Admin() {
       return true;
     });
   }, [zeiten, fahrzeugFilter, datumFilter, nurAktive, suche]);
+
+  const heute = new Date().toISOString().slice(0, 10);
+
+  const startWoche = new Date();
+  startWoche.setDate(startWoche.getDate() - startWoche.getDay() + 1);
+  const wochenStartText = startWoche.toISOString().slice(0, 10);
+
+  const minutenHeute = zeiten
+    .filter((z) => formatDatum(z.startzeit) === heute)
+    .reduce((summe, z) => summe + dauerMinuten(z.startzeit, z.endzeit), 0);
+
+  const minutenWoche = zeiten
+    .filter((z) => formatDatum(z.startzeit) >= wochenStartText)
+    .reduce((summe, z) => summe + dauerMinuten(z.startzeit, z.endzeit), 0);
+
+  const topMitarbeiter = useMemo(() => {
+    const gruppen = {};
+
+    zeiten.forEach((z) => {
+      if (!z.mitarbeiter) return;
+      gruppen[z.mitarbeiter] =
+        (gruppen[z.mitarbeiter] || 0) + dauerMinuten(z.startzeit, z.endzeit);
+    });
+
+    return Object.entries(gruppen)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+  }, [zeiten]);
 
   if (!session) {
     return (
@@ -327,14 +399,12 @@ export default function Admin() {
             font-family: Arial, sans-serif;
             background: linear-gradient(90deg, #2f5fb3 0%, #4f7fd8 42%, #f3a24d 72%, #ef7d22 100%);
           }
-
           .loginPage {
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 24px;
           }
-
           .loginBox {
             background: rgba(255,255,255,0.94);
             padding: 28px;
@@ -344,7 +414,6 @@ export default function Admin() {
             text-align: center;
             color: #0f2f6e;
           }
-
           .logo {
             margin: 0 auto 12px;
             display: flex;
@@ -359,7 +428,6 @@ export default function Admin() {
             font-weight: 900;
             border-bottom: 5px solid #f97316;
           }
-
           input {
             width: 100%;
             padding: 14px;
@@ -369,7 +437,6 @@ export default function Admin() {
             border: 1px solid #cbd5e1;
             box-sizing: border-box;
           }
-
           button {
             width: 100%;
             padding: 14px;
@@ -385,8 +452,7 @@ export default function Admin() {
       </div>
     );
   }
-
-  return (
+    return (
     <div className="page">
       <div className="wrap">
         <header>
@@ -395,9 +461,17 @@ export default function Admin() {
         </header>
 
         <div className="topActions">
-          <button className="refresh" onClick={allesLaden}>Aktualisieren</button>
-          <button className="export" onClick={csvExportieren}>CSV Export</button>
-          <button className="logout" onClick={logout}>Logout</button>
+          <button className="refresh" onClick={allesLaden}>
+            Aktualisieren
+          </button>
+
+          <button className="export" onClick={csvExportieren}>
+            CSV Export
+          </button>
+
+          <button className="logout" onClick={logout}>
+            Logout
+          </button>
         </div>
 
         {meldung && <div className="message">{meldung}</div>}
@@ -405,7 +479,9 @@ export default function Admin() {
         <div className="dashboardGrid">
           <div className="dashboardCard">
             <span>🚗 Fahrzeuge unterwegs</span>
-            <strong>{zeiten.filter((z) => z.status === "eingestempelt").length}</strong>
+            <strong>
+              {zeiten.filter((z) => z.status === "eingestempelt").length}
+            </strong>
           </div>
 
           <div className="dashboardCard">
@@ -418,6 +494,7 @@ export default function Admin() {
                       z.status === "eingestempelt" &&
                       String(z.fahrzeug || "").includes(f.name)
                   );
+
                   return f.aktiv && !unterwegs;
                 }).length
               }
@@ -426,7 +503,19 @@ export default function Admin() {
 
           <div className="dashboardCard">
             <span>👷 Aktive Mitarbeiter</span>
-            <strong>{zeiten.filter((z) => z.status === "eingestempelt").length}</strong>
+            <strong>
+              {zeiten.filter((z) => z.status === "eingestempelt").length}
+            </strong>
+          </div>
+
+          <div className="dashboardCard">
+            <span>⏱️ Stunden heute</span>
+            <strong>{minutenZuText(minutenHeute)}</strong>
+          </div>
+
+          <div className="dashboardCard">
+            <span>📆 Stunden Woche</span>
+            <strong>{minutenZuText(minutenWoche)}</strong>
           </div>
 
           <div className="dashboardCard">
@@ -434,6 +523,21 @@ export default function Admin() {
             <strong>{zeiten.length > 0 ? formatZeit(zeiten[0].startzeit) : "-"}</strong>
           </div>
         </div>
+
+        <section className="box">
+          <h2>Top Mitarbeiter nach Stunden</h2>
+
+          <div className="miniList">
+            {topMitarbeiter.length === 0 && <p>Keine abgeschlossenen Zeiten vorhanden</p>}
+
+            {topMitarbeiter.map(([name, minuten]) => (
+              <div key={name} className="miniRow">
+                <strong>{name}</strong>
+                <span>{minutenZuText(minuten)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
 
         <div className="filters">
           <input
@@ -444,12 +548,19 @@ export default function Admin() {
 
           <select value={fahrzeugFilter} onChange={(e) => setFahrzeugFilter(e.target.value)}>
             <option value="">Alle Fahrzeuge</option>
+
             {fahrzeugNamen.map((f) => (
-              <option key={f} value={f}>{f}</option>
+              <option key={f} value={f}>
+                {f}
+              </option>
             ))}
           </select>
 
-          <input type="date" value={datumFilter} onChange={(e) => setDatumFilter(e.target.value)} />
+          <input
+            type="date"
+            value={datumFilter}
+            onChange={(e) => setDatumFilter(e.target.value)}
+          />
 
           <label className="check">
             <input
@@ -485,37 +596,57 @@ export default function Admin() {
                   <td>{z.mitarbeiter}</td>
                   <td>{formatZeit(z.startzeit)}</td>
                   <td>{formatZeit(z.endzeit)}</td>
-                  <td>{dauer(z.startzeit, z.endzeit)}</td>
+                  <td>{dauerText(z.startzeit, z.endzeit)}</td>
+
                   <td>
                     {z.latitude && z.longitude ? (
-                      <a href={`https://www.google.com/maps?q=${z.latitude},${z.longitude}`} target="_blank" rel="noopener noreferrer">
+                      <a
+                        href={`https://www.google.com/maps?q=${z.latitude},${z.longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         Karte öffnen
                       </a>
                     ) : (
                       <span className="muted">GPS deaktiviert</span>
                     )}
                   </td>
+
                   <td>
                     <span className={z.status === "eingestempelt" ? "badge green" : "badge red"}>
                       {z.status === "eingestempelt" ? "Abgeholt" : "Abgegeben"}
                     </span>
                   </td>
+
                   <td>
-                    <button className="delete" onClick={() => eintragLoeschen(z.id)}>Löschen</button>
+                    <button className="delete" onClick={() => eintragLoeschen(z.id)}>
+                      Löschen
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-
         <section className="box">
           <h2>Mitarbeiter verwalten</h2>
 
           <div className="formGrid">
-            <input placeholder="Vorname" value={neuerVorname} onChange={(e) => setNeuerVorname(e.target.value)} />
-            <input placeholder="Nachname" value={neuerNachname} onChange={(e) => setNeuerNachname(e.target.value)} />
-            <button className="add" onClick={mitarbeiterHinzufuegen}>Mitarbeiter hinzufügen</button>
+            <input
+              placeholder="Vorname"
+              value={neuerVorname}
+              onChange={(e) => setNeuerVorname(e.target.value)}
+            />
+
+            <input
+              placeholder="Nachname"
+              value={neuerNachname}
+              onChange={(e) => setNeuerNachname(e.target.value)}
+            />
+
+            <button className="add" onClick={mitarbeiterHinzufuegen}>
+              Mitarbeiter hinzufügen
+            </button>
           </div>
 
           <div className="gridCards">
@@ -529,7 +660,9 @@ export default function Admin() {
                   <button onClick={() => mitarbeiterAktivAendern(m.id, m.aktiv)}>
                     {m.aktiv ? "Deaktivieren" : "Aktivieren"}
                   </button>
-                  <button className="smallDelete" onClick={() => mitarbeiterLoeschen(m.id)}>Löschen</button>
+                  <button className="smallDelete" onClick={() => mitarbeiterLoeschen(m.id)}>
+                    Löschen
+                  </button>
                 </div>
               </div>
             ))}
@@ -540,8 +673,17 @@ export default function Admin() {
           <h2>Fahrzeuge verwalten</h2>
 
           <div className="formGrid">
-            <input placeholder="Fahrzeugname" value={neuesFahrzeug} onChange={(e) => setNeuesFahrzeug(e.target.value)} />
-            <input placeholder="Kennzeichen" value={neuesKennzeichen} onChange={(e) => setNeuesKennzeichen(e.target.value)} />
+            <input
+              placeholder="Fahrzeugname"
+              value={neuesFahrzeug}
+              onChange={(e) => setNeuesFahrzeug(e.target.value)}
+            />
+
+            <input
+              placeholder="Kennzeichen"
+              value={neuesKennzeichen}
+              onChange={(e) => setNeuesKennzeichen(e.target.value)}
+            />
 
             <select value={neueKategorie} onChange={(e) => setNeueKategorie(e.target.value)}>
               <option value="PKW">PKW</option>
@@ -549,7 +691,9 @@ export default function Admin() {
               <option value="Anhänger">Anhänger</option>
             </select>
 
-            <button className="add" onClick={fahrzeugHinzufuegen}>Fahrzeug hinzufügen</button>
+            <button className="add" onClick={fahrzeugHinzufuegen}>
+              Fahrzeug hinzufügen
+            </button>
           </div>
 
           {["PKW", "Transporter", "Anhänger"].map((kat) => (
@@ -570,7 +714,9 @@ export default function Admin() {
                           {f.aktiv ? "Deaktivieren" : "Aktivieren"}
                         </button>
                         <button onClick={() => setQrFahrzeug(f)}>QR anzeigen</button>
-                        <button className="smallDelete" onClick={() => fahrzeugLoeschen(f.id)}>Löschen</button>
+                        <button className="smallDelete" onClick={() => fahrzeugLoeschen(f.id)}>
+                          Löschen
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -619,6 +765,9 @@ export default function Admin() {
         .dashboardCard { background: rgba(255,255,255,0.94); border-radius: 22px; padding: 22px; box-shadow: 0 15px 35px rgba(0,0,0,0.14); display: flex; flex-direction: column; gap: 12px; }
         .dashboardCard span { color: #64748b; font-size: 15px; font-weight: bold; }
         .dashboardCard strong { font-size: 30px; color: #0f2f6e; }
+        .box { background: rgba(255,255,255,0.94); padding: 18px; border-radius: 20px; margin-bottom: 18px; box-shadow: 0 15px 35px rgba(0,0,0,0.14); }
+        .miniList { display: grid; gap: 8px; }
+        .miniRow { display: flex; justify-content: space-between; background: #f8fafc; padding: 12px; border-radius: 12px; }
         .filters { display: grid; grid-template-columns: 1.4fr 1fr 1fr auto; gap: 12px; margin-bottom: 18px; background: rgba(255,255,255,0.22); backdrop-filter: blur(14px); padding: 14px; border-radius: 18px; }
         .filters input, .filters select, .formGrid input, .formGrid select { padding: 12px; border-radius: 12px; border: none; font-size: 15px; }
         .check { display: flex; align-items: center; gap: 8px; background: white; padding: 10px 12px; border-radius: 12px; font-weight: bold; }
@@ -627,7 +776,6 @@ export default function Admin() {
         th { background: #0f2f6e; color: white; padding: 14px; text-align: left; }
         td { padding: 14px; border-bottom: 1px solid #e5e7eb; }
         a { color: #0f2f6e; font-weight: bold; text-decoration: underline; }
-        .box { background: rgba(255,255,255,0.94); padding: 18px; border-radius: 20px; margin-bottom: 18px; box-shadow: 0 15px 35px rgba(0,0,0,0.14); }
         .formGrid { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; margin-bottom: 16px; }
         .gridCards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-bottom: 18px; }
         .miniCard { background: #f8fafc; border-radius: 16px; padding: 14px; border-left: 6px solid #16a34a; }
