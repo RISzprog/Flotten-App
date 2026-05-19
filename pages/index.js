@@ -16,6 +16,7 @@ export default function Home() {
 
   const [fahrzeuge, setFahrzeuge] = useState([]);
   const [fahrzeug, setFahrzeug] = useState("");
+  const [beifahrer, setBeifahrer] = useState("");
 
   const [meldung, setMeldung] = useState("nicht abgeholt");
 
@@ -114,7 +115,8 @@ export default function Home() {
     const { data: offene } = await supabase
       .from("zeiten")
       .select("*")
-      .eq("status", "eingestempelt");
+      .eq("status", "eingestempelt",beifahrer);
+  
 
     if (offene && offene.some((e) => e.mitarbeiter === mitarbeiter)) {
       setMeldung("🚫 Mitarbeiter hat bereits ein Fahrzeug");
@@ -238,6 +240,13 @@ export default function Home() {
                 </option>
               ))}
             </select>
+              <label>Beifahrer (optional)</label>
+
+<input
+  placeholder="Name Beifahrer"
+  value={beifahrer}
+  onChange={(e) => setBeifahrer(e.target.value)}
+/>
 
             <button className="green" onClick={abholen}>
               Abholen
