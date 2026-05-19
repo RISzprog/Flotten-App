@@ -48,6 +48,7 @@ export default function Admin() {
 
   const [neuesFahrzeug, setNeuesFahrzeug] = useState("");
   const [neuesKennzeichen, setNeuesKennzeichen] = useState("");
+  const [neueKategorie, setNeueKategorie] = useState("PKW");
 
   const [neuerVorname, setNeuerVorname] = useState("");
   const [neuerNachname, setNeuerNachname] = useState("");
@@ -209,6 +210,7 @@ export default function Admin() {
           name: neuesFahrzeug.trim(),
           kennzeichen: neuesKennzeichen.trim(),
           aktiv: true
+          kategorie: neueKategorie,
         }
       ]);
 
@@ -219,6 +221,7 @@ export default function Admin() {
 
     setNeuesFahrzeug("");
     setNeuesKennzeichen("");
+  setNeueKategorie("PKW");
 
     setMeldung("Fahrzeug hinzugefügt");
 
