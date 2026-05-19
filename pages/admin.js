@@ -354,20 +354,6 @@ export default function Admin() {
     .filter((z) => formatDatum(z.startzeit) >= wochenStartText)
     .reduce((summe, z) => summe + dauerMinuten(z.startzeit, z.endzeit), 0);
 
-  const topMitarbeiter = useMemo(() => {
-    const gruppen = {};
-
-    zeiten.forEach((z) => {
-      if (!z.mitarbeiter) return;
-      gruppen[z.mitarbeiter] =
-        (gruppen[z.mitarbeiter] || 0) + dauerMinuten(z.startzeit, z.endzeit);
-    });
-
-    return Object.entries(gruppen)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
-  }, [zeiten]);
-
   if (!session) {
     return (
       <div className="page loginPage">
