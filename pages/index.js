@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import { createClient } from "@supabase/supabase-js";
 
@@ -10,112 +10,144 @@ const supabase = createClient(
 export default function Home() {
   const router = useRouter();
 
+  const [mitarbeiterListe, setMitarbeiterListe] = useState([]);
+  const [mitarbeiterSuche, setMitarbeiterSuche] = useState("");
   const [mitarbeiter, setMitarbeiter] = useState("");
-  const [fahrzeug, setFahrzeug] = useState("");
-
-  const [mitarbeiterListe, setMitarbeiterListe] =
-    useState([]);
 
   const [fahrzeuge, setFahrzeuge] = useState([]);
+  const [fahrzeug, setFahrzeug] = useState("");
 
-  const [mitarbeiterSuche, setMitarbeiterSuche] =
-    useState("");
-
-  const [meldung, setMeldung] = useState("");
+  const [meldung, setMeldung] = useState("nicht abgeholt");
 
   useEffect(() => {
-    fahrzeugeLaden();
-    mitarbeiterLaden();
+    datenLaden();
   }, []);
 
   useEffect(() => {
-    if (
-      router.query.fahrzeug &&
-      fahrzeuge.length > 0
-    ) {
-      const qrFahrzeug =
-        decodeURIComponent(
-          router.query.fahrzeug
-        );
+    if (router.query.fahrzeug && fahrzeuge.length > 0) {
+      const qrFahrzeug = decodeURIComponent(router.query.fahrzeug);
 
-      const gefunden = fahrzeuge.find((f) =>
-        `${f.name} · ${f.kennzeichen}`.includes(
-          qrFahrzeug
-        )
-      );
+      const gefunden = fahrzeuge.find((f) => {
+        const text = `${f.name} · ${f.kennzeichen || ""}`;
+        return text.includes(qrFahrzeug) || String(f.kennzeichen || "").includes(qrFahrzeug);
+      });
 
       if (gefunden) {
-        setFahrzeug(
-          `${gefunden.name} · ${gefunden.kennzeichen}`
-        );
+        setFahrzeug(`${gefunden.name} · ${gefunden.kennzeichen || ""}`);
       }
     }
   }, [router.query, fahrzeuge]);
 
-  async function fahrzeugeLaden() {
-    const { data } = await supabase
+  async function datenLaden() {
+    const { data: fahrzeugDaten } = await supabase
       .from("fahrzeuge")
       .select("*")
       .eq("aktiv", true)
-      .order("name");
+      .order("name", { ascending: true });
 
-    setFahrzeuge(data || []);
-  }
-
-  async function mitarbeiterLaden() {
-    const { data } = await supabase
+    const { data: mitarbeiterDaten } = await supabase
       .from("mitarbeiter")
       .select("*")
       .eq("aktiv", true)
-      .order("nachname");
+      .order("nachname", { ascending: true });
 
-    setMitarbeiterListe(data || []);
+    setFahrzeuge(fahrzeugDaten || []);
+    setMitarbeiterListe(mitarbeiterDaten || []);
+  }
+
+  const gefilterteMitarbeiter = useMemo(() => {
+    if (mitarbeiterSuche.trim().length < 2) return [];
+
+    const suche = mitarbeiterSuche.toLowerCase();
+
+    return mitarbeiterListe
+      .filter((m) => {
+        const normal = `${m.vorname} ${m.nachname}`.toLowerCase();
+        const andersrum = `${m.nachname} ${m.vorname}`.toLowerCase();
+        return normal.includes(suche) || andersrum.includes(suche);
+      })
+      .slice(0, 6);
+  }, [mitarbeiterSuche, mitarbeiterListe]);
+
+  function mitarbeiterWaehlen(m) {
+    const name = `${m.vorname} ${m.nachname}`;
+    setMitarbeiter(name);
+    setMitarbeiterSuche(name);
+  }
+
+  function gpsHolen() {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve(null);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: String(position.coords.latitude),
+            longitude: String(position.coords.longitude)
+          });
+        },
+        () => {
+          resolve(null);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
+        }
+      );
+    });
   }
 
   async function abholen() {
     if (!mitarbeiter || !fahrzeug) {
-      setMeldung(
-        "Bitte Mitarbeiter und Fahrzeug auswählen"
-      );
-
+      setMeldung("Bitte Mitarbeiter und Fahrzeug auswählen");
       return;
     }
 
-    const { data: offen } = await supabase
+    const { data: offene } = await supabase
       .from("zeiten")
       .select("*")
-      .eq("status", "eingestempelt")
-      .eq("mitarbeiter", mitarbeiter);
+      .eq("status", "eingestempelt");
 
-    if (offen.length > 0) {
-      setMeldung(
-        "Mitarbeiter hat bereits Fahrzeug abgeholt"
-      );
-
+    if (offene && offene.some((e) => e.mitarbeiter === mitarbeiter)) {
+      setMeldung("🚫 Mitarbeiter hat bereits ein Fahrzeug");
       return;
     }
 
-    await supabase.from("zeiten").insert([
+    if (offene && offene.some((e) => e.fahrzeug === fahrzeug)) {
+      setMeldung("🚫 Fahrzeug bereits unterwegs");
+      return;
+    }
+
+    setMeldung("GPS wird gesucht...");
+
+    const gps = await gpsHolen();
+
+    const { error } = await supabase.from("zeiten").insert([
       {
         mitarbeiter,
         fahrzeug,
-        startzeit: new Date(),
+        startzeit: new Date().toISOString(),
+        latitude: gps ? gps.latitude : "",
+        longitude: gps ? gps.longitude : "",
         status: "eingestempelt"
       }
     ]);
 
-    setMeldung("Fahrzeug abgeholt");
+    if (error) {
+      setMeldung("Fehler beim Abholen");
+      return;
+    }
 
-    setMitarbeiter("");
-    setMitarbeiterSuche("");
+    setMeldung(gps ? "🟢 Abgeholt mit GPS" : "🟢 Abgeholt ohne GPS");
   }
 
   async function abgeben() {
     if (!mitarbeiter) {
-      setMeldung(
-        "Bitte Mitarbeiter auswählen"
-      );
-
+      setMeldung("Bitte Mitarbeiter auswählen");
       return;
     }
 
@@ -124,241 +156,291 @@ export default function Home() {
       .select("*")
       .eq("mitarbeiter", mitarbeiter)
       .eq("status", "eingestempelt")
-      .order("startzeit", {
-        ascending: false
-      })
+      .order("startzeit", { ascending: false })
       .limit(1);
 
     if (!data || data.length === 0) {
-      setMeldung(
-        "Kein aktives Fahrzeug gefunden"
-      );
-
+      setMeldung("Kein aktives Fahrzeug gefunden");
       return;
     }
 
-    await supabase
+    const gps = await gpsHolen();
+
+    const { error } = await supabase
       .from("zeiten")
       .update({
-        endzeit: new Date(),
-        status: "ausgestempelt"
+        endzeit: new Date().toISOString(),
+        status: "ausgestempelt",
+        latitude: gps ? gps.latitude : data[0].latitude,
+        longitude: gps ? gps.longitude : data[0].longitude
       })
       .eq("id", data[0].id);
 
-    setMeldung("Fahrzeug abgegeben");
+    if (error) {
+      setMeldung("Fehler beim Abgeben");
+      return;
+    }
 
-    setMitarbeiter("");
-    setMitarbeiterSuche("");
+    setMeldung(gps ? "🔴 Abgegeben mit GPS" : "🔴 Abgegeben ohne GPS");
     setFahrzeug("");
   }
 
-  const gefilterteMitarbeiter =
-    mitarbeiterListe.filter((m) => {
-      const name =
-        `${m.vorname} ${m.nachname}`.toLowerCase();
-
-      return name.includes(
-        mitarbeiterSuche.toLowerCase()
-      );
-    });
-
   return (
     <div className="page">
-      <div className="overlay">
-        <img
-          src="/logo.png"
-          alt="RIS"
-          className="logo"
-        />
+      <div className="wrap">
+        <header>
+          <img src="/logo.png" alt="RIS Logo" className="logoImg" />
+          <h1>RIS Flotten App</h1>
+        </header>
 
-        <h1>RIS Flotten App</h1>
+        <main>
+          <section className="card">
+            <label>Mitarbeiter suchen</label>
 
-        <div className="card">
-          <label>Mitarbeiter wählen</label>
+            <div className="searchBox">
+              <input
+                placeholder="Vorname oder Nachname eingeben"
+                value={mitarbeiterSuche}
+                onChange={(e) => {
+                  setMitarbeiterSuche(e.target.value);
+                  setMitarbeiter("");
+                }}
+              />
 
-          <input
-            type="text"
-            placeholder="Vorname oder Nachname"
-            value={mitarbeiterSuche}
-            onChange={(e) =>
-              setMitarbeiterSuche(
-                e.target.value
-              )
-            }
-          />
-
-          {mitarbeiterSuche && (
-            <div className="dropdown">
-              {gefilterteMitarbeiter.map((m) => {
-                const name =
-                  `${m.vorname} ${m.nachname}`;
-
-                return (
-                  <div
-                    key={m.id}
-                    className="dropdownItem"
-                    onClick={() => {
-                      setMitarbeiter(name);
-                      setMitarbeiterSuche(name);
-                    }}
-                  >
-                    {name}
-                  </div>
-                );
-              })}
+              {gefilterteMitarbeiter.length > 0 && !mitarbeiter && (
+                <div className="suggestions">
+                  {gefilterteMitarbeiter.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      className="suggestion"
+                      onClick={() => mitarbeiterWaehlen(m)}
+                    >
+                      {m.vorname} {m.nachname}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
 
-          <label>Fahrzeug wählen</label>
+            <label>Fahrzeug wählen</label>
 
-          <select
-            value={fahrzeug}
-            onChange={(e) =>
-              setFahrzeug(e.target.value)
-            }
-          >
-            <option value="">
-              Fahrzeug wählen
-            </option>
+            <select value={fahrzeug} onChange={(e) => setFahrzeug(e.target.value)}>
+              <option value="">Fahrzeug wählen</option>
 
-            {fahrzeuge.map((f) => (
-              <option
-                key={f.id}
-                value={`${f.name} · ${f.kennzeichen}`}
-              >
-                {f.name} · {f.kennzeichen}
-              </option>
-            ))}
-          </select>
+              {fahrzeuge.map((f) => (
+                <option key={f.id} value={`${f.name} · ${f.kennzeichen || ""}`}>
+                  {f.name} · {f.kennzeichen || "ohne Kennzeichen"}
+                </option>
+              ))}
+            </select>
 
-          <button
-            className="green"
-            onClick={abholen}
-          >
-            Abholen
-          </button>
+            <button className="green" onClick={abholen}>
+              Abholen
+            </button>
 
-          <button
-            className="red"
-            onClick={abgeben}
-          >
-            Abgeben
-          </button>
+            <button className="red" onClick={abgeben}>
+              Abgeben
+            </button>
 
-          {meldung && (
-            <p className="meldung">
-              {meldung}
-            </p>
-          )}
-        </div>
+            <div className="status">Status: {meldung}</div>
+          </section>
+
+          <section className="thanks">
+            <h2>Danke ans Team</h2>
+            <div className="line" />
+            <p>Teşekkürler ekibe</p>
+            <p>Mulțumim echipei</p>
+            <p>Спасибо команде</p>
+          </section>
+        </main>
+
+        <footer>© RIS 2026</footer>
       </div>
 
       <style jsx>{`
         .page {
           min-height: 100vh;
-          background:
-            linear-gradient(
-              90deg,
-              #2f5fb3 0%,
-              #4f7fd8 42%,
-              #f3a24d 72%,
-              #ef7d22 100%
-            );
-
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
+          padding: 24px;
           font-family: Arial, sans-serif;
+          background: linear-gradient(
+            90deg,
+            #2f5fb3 0%,
+            #4f7fd8 42%,
+            #f3a24d 72%,
+            #ef7d22 100%
+          );
+          color: white;
         }
 
-        .overlay {
-          width: 100%;
-          max-width: 520px;
+        .wrap {
+          max-width: 1100px;
+          margin: 0 auto;
+        }
+
+        header {
           text-align: center;
+          margin-bottom: 28px;
         }
 
-        .logo {
-          width: 220px;
-          margin-bottom: 20px;
-          border-radius: 20px;
+        .logoImg {
+          width: 260px;
+          max-width: 80%;
+          height: auto;
+          margin-bottom: 12px;
+          filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.25));
         }
 
         h1 {
-          color: white;
-          font-size: 52px;
-          margin-bottom: 24px;
-          text-shadow: 0 10px 25px rgba(0,0,0,0.3);
+          font-size: 44px;
+          margin: 0;
+          font-weight: 900;
+          text-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        main {
+          display: grid;
+          grid-template-columns: 1.2fr 0.8fr;
+          gap: 24px;
         }
 
         .card {
-          background: rgba(255,255,255,0.18);
-          backdrop-filter: blur(14px);
-          border-radius: 26px;
+          background: rgba(255, 255, 255, 0.18);
+          backdrop-filter: blur(16px);
           padding: 24px;
-          text-align: left;
-          box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+          border-radius: 24px;
+          border: 1px solid rgba(255, 255, 255, 0.28);
+          box-shadow: 0 12px 34px rgba(0, 0, 0, 0.22);
         }
 
         label {
           display: block;
-          color: white;
           font-weight: bold;
+          font-size: 18px;
           margin-bottom: 8px;
-          margin-top: 18px;
+        }
+
+        .searchBox {
+          position: relative;
         }
 
         input,
         select {
           width: 100%;
           padding: 16px;
-          border-radius: 16px;
-          border: none;
+          margin-bottom: 20px;
           font-size: 18px;
-          margin-bottom: 8px;
+          border-radius: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.35);
+          background: rgba(255, 255, 255, 0.18);
+          color: white;
+          box-sizing: border-box;
+        }
+
+        input::placeholder {
+          color: rgba(255, 255, 255, 0.75);
+        }
+
+        option {
+          color: black;
+        }
+
+        .suggestions {
+          position: absolute;
+          top: 58px;
+          left: 0;
+          right: 0;
+          background: white;
+          border-radius: 14px;
+          overflow: hidden;
+          box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+          z-index: 20;
+        }
+
+        .suggestion {
+          width: 100%;
+          padding: 14px 16px;
+          text-align: left;
+          border: none;
+          background: white;
+          color: #0f2f6e;
+          font-size: 18px;
+          font-weight: bold;
+          border-bottom: 1px solid #e5e7eb;
+          box-shadow: none;
+          margin-bottom: 0;
+          border-radius: 0;
         }
 
         button {
           width: 100%;
-          padding: 18px;
-          border: none;
-          border-radius: 18px;
+          padding: 20px;
           color: white;
+          border: none;
+          border-radius: 16px;
           font-size: 26px;
           font-weight: bold;
-          margin-top: 18px;
+          margin-bottom: 14px;
+          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
         }
 
         .green {
-          background: #16a34a;
+          background: linear-gradient(135deg, #16a34a, #15803d);
         }
 
         .red {
-          background: #dc2626;
+          background: linear-gradient(135deg, #ef4444, #b91c1c);
         }
 
-        .meldung {
-          margin-top: 18px;
-          color: white;
+        .status {
+          margin-top: 8px;
+          background: rgba(255, 255, 255, 0.18);
+          border-radius: 12px;
+          padding: 12px 16px;
+          border: 1px solid rgba(255, 255, 255, 0.24);
+          font-size: 17px;
           font-weight: bold;
+        }
+
+        .thanks {
+          padding: 20px;
+          text-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+        }
+
+        .thanks h2 {
+          font-size: 32px;
+          margin-top: 0;
+        }
+
+        .line {
+          height: 3px;
+          background: linear-gradient(90deg, #ffffff, #f97316);
+          margin-bottom: 24px;
+        }
+
+        .thanks p {
+          font-size: 22px;
+          font-weight: bold;
+        }
+
+        footer {
           text-align: center;
+          margin-top: 36px;
+          font-weight: bold;
         }
 
-        .dropdown {
-          background: white;
-          border-radius: 16px;
-          overflow: hidden;
-          margin-bottom: 12px;
-        }
+        @media (max-width: 800px) {
+          main {
+            grid-template-columns: 1fr;
+          }
 
-        .dropdownItem {
-          padding: 14px;
-          cursor: pointer;
-          border-bottom: 1px solid #eee;
-        }
+          h1 {
+            font-size: 34px;
+          }
 
-        .dropdownItem:hover {
-          background: #f3f4f6;
+          .logoImg {
+            width: 210px;
+          }
         }
       `}</style>
     </div>
