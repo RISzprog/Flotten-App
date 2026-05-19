@@ -24,19 +24,25 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (router.query.fahrzeug && fahrzeuge.length > 0) {
-      const qrFahrzeug = decodeURIComponent(router.query.fahrzeug);
+    if (!router.isReady || fahrzeuge.length === 0) return;
 
-      const gefunden = fahrzeuge.find((f) => {
-        const text = `${f.name} · ${f.kennzeichen || ""}`;
-        return text.includes(qrFahrzeug) || String(f.kennzeichen || "").includes(qrFahrzeug);
-      });
+    const qr = router.query.fahrzeug;
+    if (!qr) return;
 
-      if (gefunden) {
-        setFahrzeug(`${gefunden.name} · ${gefunden.kennzeichen || ""}`);
-      }
+    const qrFahrzeug = decodeURIComponent(String(qr));
+
+    const gefunden = fahrzeuge.find((f) => {
+      const text = `${f.name} · ${f.kennzeichen || ""}`;
+      return (
+        text.includes(qrFahrzeug) ||
+        String(f.kennzeichen || "").includes(qrFahrzeug)
+      );
+    });
+
+    if (gefunden) {
+      setFahrzeug(`${gefunden.name} · ${gefunden.kennzeichen || ""}`);
     }
-  }, [router.query, fahrzeuge]);
+  }, [router.isReady, router.query.fahrzeug, fahrzeuge]);
 
   async function datenLaden() {
     const { data: fahrzeugDaten } = await supabase
@@ -77,7 +83,7 @@ export default function Home() {
 
   function gpsHolen() {
     return new Promise((resolve) => {
-      if (!navigator.geolocation) {
+      if (typeof navigator === "undefined" || !navigator.geolocation) {
         resolve(null);
         return;
       }
@@ -89,9 +95,7 @@ export default function Home() {
             longitude: String(position.coords.longitude)
           });
         },
-        () => {
-          resolve(null);
-        },
+        () => resolve(null),
         {
           enableHighAccuracy: true,
           timeout: 15000,
@@ -263,13 +267,7 @@ export default function Home() {
           min-height: 100vh;
           padding: 24px;
           font-family: Arial, sans-serif;
-          background: linear-gradient(
-            90deg,
-            #2f5fb3 0%,
-            #4f7fd8 42%,
-            #f3a24d 72%,
-            #ef7d22 100%
-          );
+          background: linear-gradient(90deg, #2f5fb3 0%, #4f7fd8 42%, #f3a24d 72%, #ef7d22 100%);
           color: white;
         }
 
@@ -284,10 +282,11 @@ export default function Home() {
         }
 
         .logoImg {
-          width: 260px;
-          max-width: 80%;
+          width: 210px;
+          max-width: 70%;
           height: auto;
           margin-bottom: 12px;
+          border-radius: 24px;
           filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.25));
         }
 
@@ -439,7 +438,7 @@ export default function Home() {
           }
 
           .logoImg {
-            width: 210px;
+            width: 170px;
           }
         }
       `}</style>
