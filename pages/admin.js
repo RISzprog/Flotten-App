@@ -511,12 +511,10 @@ export default function Admin() {
     .filter((z) => z.status === "eingestempelt")
     .map((z) => (
       <div key={z.id}>
-        {z.mitarbeiter}
-        {" → "}
-        {z.fahrzeug}
+        {z.mitarbeiter} → {z.fahrzeug}
       </div>
     ))}
-</div> 
+</div>
           </div>
 
           <div className="dashboardCard">
@@ -805,6 +803,20 @@ export default function Admin() {
         .qrBox { background: white; border-radius: 24px; padding: 26px; text-align: center; max-width: 380px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.35); }
         .qrBox img { width: 260px; height: 260px; margin: 10px auto; display: block; }
         .qrLink { font-size: 12px; word-break: break-all; color: #64748b; }
+        .liveList {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #0f2f6e;
+  display: grid;
+  gap: 6px;
+}
+
+.liveList div {
+  background: #f8fafc;
+  padding: 7px 9px;
+  border-radius: 10px;
+  font-weight: bold;
+}
         footer { text-align: center; margin-top: 36px; font-weight: bold; color: white; }
         @media (max-width: 900px) { .formGrid, .filters { grid-template-columns: 1fr; } }
       `}</style>
