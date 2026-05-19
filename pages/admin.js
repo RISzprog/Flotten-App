@@ -209,8 +209,8 @@ export default function Admin() {
         {
           name: neuesFahrzeug.trim(),
           kennzeichen: neuesKennzeichen.trim(),
-          aktiv: true
-          kategorie: neueKategorie,
+          aktiv: true,
+          kategorie: neueKategorie
         }
       ]);
 
