@@ -1,0 +1,22 @@
+{
+  "name": "RIS Flotten App",
+  "short_name": "RIS Flotte",
+  "description": "RIS Fahrzeugverwaltung",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f2f6e",
+  "theme_color": "#0f2f6e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
