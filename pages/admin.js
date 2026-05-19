@@ -539,20 +539,7 @@ export default function Admin() {
           </div>
         </div>
 
-        <section className="box">
-          <h2>Top Mitarbeiter nach Stunden</h2>
-
-          <div className="miniList">
-            {topMitarbeiter.length === 0 && <p>Keine abgeschlossenen Zeiten vorhanden</p>}
-
-            {topMitarbeiter.map(([name, minuten]) => (
-              <div key={name} className="miniRow">
-                <strong>{name}</strong>
-                <span>{minutenZuText(minuten)}</span>
-              </div>
-            ))}
-          </div>
-        </section>
+    
 
         <div className="filters">
           <input
