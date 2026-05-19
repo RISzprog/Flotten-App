@@ -529,6 +529,26 @@ export default function Admin() {
 
           <div className="dashboardCard">
             <span>📍 Letzte Abholung</span>
+  <div className="liveGps">
+  {zeiten
+    .filter(
+      (z) =>
+        z.status === "eingestempelt" &&
+        z.latitude &&
+        z.longitude
+    )
+    .slice(0, 3)
+    .map((z) => (
+      <a
+        key={z.id}
+        href={`https://www.google.com/maps?q=${z.latitude},${z.longitude}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        📍 {z.mitarbeiter} → {z.fahrzeug}
+      </a>
+    ))}
+</div>
             <strong>{zeiten.length > 0 ? formatZeit(zeiten[0].startzeit) : "-"}</strong>
           </div>
         </div>
@@ -812,6 +832,21 @@ export default function Admin() {
 }
 
 .liveList div {
+.liveGps {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.liveGps a {
+  background: #f8fafc;
+  padding: 8px 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #0f2f6e;
+  font-weight: bold;
+  font-size: 13px;
+}
   background: #f8fafc;
   padding: 7px 9px;
   border-radius: 10px;
