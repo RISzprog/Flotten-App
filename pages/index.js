@@ -265,7 +265,7 @@ export default function Home() {
       <style jsx>{`
         .page {
           min-height: 100vh;
-          padding: 24px;
+          padding: 14px;
           font-family: Arial, sans-serif;
           background: linear-gradient(90deg, #2f5fb3 0%, #4f7fd8 42%, #f3a24d 72%, #ef7d22 100%);
           color: white;
@@ -306,7 +306,7 @@ export default function Home() {
         .card {
           background: rgba(255, 255, 255, 0.18);
           backdrop-filter: blur(16px);
-          padding: 24px;
+          padding: 18px;
           border-radius: 24px;
           border: 1px solid rgba(255, 255, 255, 0.28);
           box-shadow: 0 12px 34px rgba(0, 0, 0, 0.22);
@@ -373,11 +373,11 @@ export default function Home() {
 
         button {
           width: 100%;
-          padding: 20px;
+          padding: 16px;
           color: white;
           border: none;
           border-radius: 16px;
-          font-size: 26px;
+          font-size: 22px;
           font-weight: bold;
           margin-bottom: 14px;
           box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
@@ -438,7 +438,7 @@ export default function Home() {
           }
 
           .logoImg {
-            width: 170px;
+            width: 150px;
           }
         }
       `}</style>
