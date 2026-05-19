@@ -146,7 +146,7 @@ export default function Home() {
       return;
     }
 
-    setMeldung(gps ? "🟢 Abgeholt mit GPS" : "🟢 Abgeholt ohne GPS");
+    setMeldung("🟢 Abgeholt");
   }
 
   async function abgeben() {
@@ -185,7 +185,7 @@ export default function Home() {
       return;
     }
 
-    setMeldung(gps ? "🔴 Abgegeben mit GPS" : "🔴 Abgegeben ohne GPS");
+    setMeldung("🔴 Abgegeben");
     setFahrzeug("");
   }
 
