@@ -624,8 +624,7 @@ export default function Admin() {
           }
         `}</style>
       </div>
-    );
-  }
+ 
       <section className="box">
   <button
     className="toggleTitle"
