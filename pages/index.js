@@ -16,6 +16,7 @@ export default function Home() {
 
   const [fahrzeuge, setFahrzeuge] = useState([]);
   const [fahrzeug, setFahrzeug] = useState("");
+  const [beifahrer, setBeifahrer] = useState("");
 
   const [meldung, setMeldung] = useState("nicht abgeholt");
   const [gps, setGps] = useState(null);
