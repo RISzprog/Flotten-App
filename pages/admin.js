@@ -625,33 +625,7 @@ export default function Admin() {
         `}</style>
       </div>
  
-      <section className="box">
-  <button
-    className="toggleTitle"
-    onClick={() => setZeigeKarte(!zeigeKarte)}
-  >
-    {zeigeKarte ? "▼" : "▶"} Live-Karte GPS
-  </button>
-
-  {zeigeKarte && (
-    <>
-      <input
-        className="mapSearch"
-        placeholder="Fahrzeug auf Karte suchen..."
-        value={kartenSuche}
-        onChange={(e) => setKartenSuche(e.target.value)}
-      />
-
-      <LiveMap
-        zeiten={aktiveZeiten.filter((z) =>
-          String(z.fahrzeug || "")
-            .toLowerCase()
-            .includes(kartenSuche.toLowerCase())
-        )}
-      />
-    </>
-  )}
-</section>
+     
 
         <section className="box">
           <button
@@ -828,7 +802,33 @@ export default function Admin() {
             </div>
           </div>
         )}
+<section className="box">
+  <button
+    className="toggleTitle"
+    onClick={() => setZeigeKarte(!zeigeKarte)}
+  >
+    {zeigeKarte ? "▼" : "▶"} Live-Karte GPS
+  </button>
 
+  {zeigeKarte && (
+    <>
+      <input
+        className="mapSearch"
+        placeholder="Fahrzeug auf Karte suchen..."
+        value={kartenSuche}
+        onChange={(e) => setKartenSuche(e.target.value)}
+      />
+
+      <LiveMap
+        zeiten={aktiveZeiten.filter((z) =>
+          String(z.fahrzeug || "")
+            .toLowerCase()
+            .includes(kartenSuche.toLowerCase())
+        )}
+      />
+    </>
+  )}
+</section>
         <footer>© RIS 2026</footer>
       </div>
 
