@@ -16,12 +16,29 @@ export default function Home() {
 
   const [fahrzeuge, setFahrzeuge] = useState([]);
   const [fahrzeug, setFahrzeug] = useState("");
-  const [beifahrer, setBeifahrer] = useState("");
 
   const [meldung, setMeldung] = useState("nicht abgeholt");
+  const [gps, setGps] = useState(null);
 
   useEffect(() => {
     datenLaden();
+
+    if (typeof navigator !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setGps({
+            latitude: String(position.coords.latitude),
+            longitude: String(position.coords.longitude)
+          });
+        },
+        () => {},
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 60000
+        }
+      );
+    }
   }, []);
 
   useEffect(() => {
@@ -82,30 +99,6 @@ export default function Home() {
     setMitarbeiterSuche(name);
   }
 
-  function gpsHolen() {
-    return new Promise((resolve) => {
-      if (typeof navigator === "undefined" || !navigator.geolocation) {
-        resolve(null);
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          resolve({
-            latitude: String(position.coords.latitude),
-            longitude: String(position.coords.longitude)
-          });
-        },
-        () => resolve(null),
-        {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 0
-        }
-      );
-    });
-  }
-
   async function abholen() {
     if (!mitarbeiter || !fahrzeug) {
       setMeldung("Bitte Mitarbeiter und Fahrzeug auswählen");
@@ -115,8 +108,7 @@ export default function Home() {
     const { data: offene } = await supabase
       .from("zeiten")
       .select("*")
-      .eq("status", "eingestempelt",beifahrer);
-  
+      .eq("status", "eingestempelt");
 
     if (offene && offene.some((e) => e.mitarbeiter === mitarbeiter)) {
       setMeldung("🚫 Mitarbeiter hat bereits ein Fahrzeug");
@@ -128,17 +120,13 @@ export default function Home() {
       return;
     }
 
-    setMeldung("GPS wird gesucht...");
-
-    const gps = await gpsHolen();
-
     const { error } = await supabase.from("zeiten").insert([
       {
         mitarbeiter,
         fahrzeug,
         startzeit: new Date().toISOString(),
-        latitude: gps ? gps.latitude : "",
-        longitude: gps ? gps.longitude : "",
+        latitude: gps?.latitude || "",
+        longitude: gps?.longitude || "",
         status: "eingestempelt"
       }
     ]);
@@ -170,15 +158,13 @@ export default function Home() {
       return;
     }
 
-    const gps = await gpsHolen();
-
     const { error } = await supabase
       .from("zeiten")
       .update({
         endzeit: new Date().toISOString(),
         status: "ausgestempelt",
-        latitude: gps ? gps.latitude : data[0].latitude,
-        longitude: gps ? gps.longitude : data[0].longitude
+        latitude: gps?.latitude || data[0].latitude,
+        longitude: gps?.longitude || data[0].longitude
       })
       .eq("id", data[0].id);
 
@@ -240,13 +226,6 @@ export default function Home() {
                 </option>
               ))}
             </select>
-              <label>Beifahrer (optional)</label>
-
-<input
-  placeholder="Name Beifahrer"
-  value={beifahrer}
-  onChange={(e) => setBeifahrer(e.target.value)}
-/>
 
             <button className="green" onClick={abholen}>
               Abholen
@@ -287,20 +266,20 @@ export default function Home() {
 
         header {
           text-align: center;
-          margin-bottom: 28px;
+          margin-bottom: 18px;
         }
 
         .logoImg {
-          width: 210px;
+          width: 150px;
           max-width: 70%;
           height: auto;
-          margin-bottom: 12px;
+          margin-bottom: 8px;
           border-radius: 24px;
           filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.25));
         }
 
         h1 {
-          font-size: 44px;
+          font-size: 34px;
           margin: 0;
           font-weight: 900;
           text-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
@@ -309,7 +288,7 @@ export default function Home() {
         main {
           display: grid;
           grid-template-columns: 1.2fr 0.8fr;
-          gap: 24px;
+          gap: 20px;
         }
 
         .card {
@@ -324,7 +303,7 @@ export default function Home() {
         label {
           display: block;
           font-weight: bold;
-          font-size: 18px;
+          font-size: 17px;
           margin-bottom: 8px;
         }
 
@@ -335,9 +314,9 @@ export default function Home() {
         input,
         select {
           width: 100%;
-          padding: 16px;
-          margin-bottom: 20px;
-          font-size: 18px;
+          padding: 14px;
+          margin-bottom: 16px;
+          font-size: 17px;
           border-radius: 14px;
           border: 1px solid rgba(255, 255, 255, 0.35);
           background: rgba(255, 255, 255, 0.18);
@@ -355,7 +334,7 @@ export default function Home() {
 
         .suggestions {
           position: absolute;
-          top: 58px;
+          top: 54px;
           left: 0;
           right: 0;
           background: white;
@@ -372,7 +351,7 @@ export default function Home() {
           border: none;
           background: white;
           color: #0f2f6e;
-          font-size: 18px;
+          font-size: 17px;
           font-weight: bold;
           border-bottom: 1px solid #e5e7eb;
           box-shadow: none;
@@ -388,7 +367,7 @@ export default function Home() {
           border-radius: 16px;
           font-size: 22px;
           font-weight: bold;
-          margin-bottom: 14px;
+          margin-bottom: 12px;
           box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
         }
 
@@ -401,39 +380,39 @@ export default function Home() {
         }
 
         .status {
-          margin-top: 8px;
+          margin-top: 6px;
           background: rgba(255, 255, 255, 0.18);
           border-radius: 12px;
           padding: 12px 16px;
           border: 1px solid rgba(255, 255, 255, 0.24);
-          font-size: 17px;
+          font-size: 16px;
           font-weight: bold;
         }
 
         .thanks {
-          padding: 20px;
+          padding: 14px;
           text-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
         }
 
         .thanks h2 {
-          font-size: 32px;
+          font-size: 28px;
           margin-top: 0;
         }
 
         .line {
           height: 3px;
           background: linear-gradient(90deg, #ffffff, #f97316);
-          margin-bottom: 24px;
+          margin-bottom: 18px;
         }
 
         .thanks p {
-          font-size: 22px;
+          font-size: 20px;
           font-weight: bold;
         }
 
         footer {
           text-align: center;
-          margin-top: 36px;
+          margin-top: 28px;
           font-weight: bold;
         }
 
@@ -443,11 +422,15 @@ export default function Home() {
           }
 
           h1 {
-            font-size: 34px;
+            font-size: 30px;
           }
 
           .logoImg {
-            width: 150px;
+            width: 130px;
+          }
+
+          .thanks {
+            display: none;
           }
         }
       `}</style>
