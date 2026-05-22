@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
+import dynamic from "next/dynamic";
+
+const LiveMap = dynamic(() => import("../components/LiveMap"), {
+  ssr: false
+});
 
 const supabase = createClient(
   "https://rbhbijcxbemebynfrpiz.supabase.co",
@@ -540,7 +545,10 @@ export default function Admin() {
         </div>
 
     
-
+<section className="box">
+  <h2>Live-Karte GPS</h2>
+  <LiveMap zeiten={zeiten.filter((z) => z.status === "eingestempelt")} />
+</section>
         <div className="filters">
           <input
             placeholder="Suche Mitarbeiter/Fahrzeug/Kennzeichen"
