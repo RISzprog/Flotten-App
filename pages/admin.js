@@ -698,60 +698,28 @@ const [zeigeFahrzeuge, setZeigeFahrzeuge] = useState(false);
         </section>
 
         <section className="box">
-          <h2>Fahrzeuge verwalten</h2>
+  <button className="toggleTitle" onClick={() => setZeigeKarte(!zeigeKarte)}>
+    {zeigeKarte ? "▼" : "▶"} Live-Karte GPS
+  </button>
 
-          <div className="formGrid">
-            <input
-              placeholder="Fahrzeugname"
-              value={neuesFahrzeug}
-              onChange={(e) => setNeuesFahrzeug(e.target.value)}
-            />
+  {zeigeKarte && (
+    <>
+      <input
+        placeholder="Fahrzeug auf Karte suchen..."
+        value={kartenSuche}
+        onChange={(e) => setKartenSuche(e.target.value)}
+      />
 
-            <input
-              placeholder="Kennzeichen"
-              value={neuesKennzeichen}
-              onChange={(e) => setNeuesKennzeichen(e.target.value)}
-            />
-
-            <select value={neueKategorie} onChange={(e) => setNeueKategorie(e.target.value)}>
-              <option value="PKW">PKW</option>
-              <option value="Transporter">Transporter</option>
-              <option value="Anhänger">Anhänger</option>
-            </select>
-
-            <button className="add" onClick={fahrzeugHinzufuegen}>
-              Fahrzeug hinzufügen
-            </button>
-          </div>
-
-          {["PKW", "Transporter", "Anhänger"].map((kat) => (
-            <div key={kat}>
-              <h3>{kat}</h3>
-
-              <div className="gridCards">
-                {fahrzeuge
-                  .filter((f) => (f.kategorie || "PKW") === kat)
-                  .map((f) => (
-                    <div key={f.id} className={f.aktiv ? "miniCard" : "miniCard inactive"}>
-                      <strong>{f.name}</strong>
-                      <span>{f.kennzeichen || "kein Kennzeichen"}</span>
-
-                      <div className="miniButtons">
-                        <button onClick={() => fahrzeugBearbeiten(f)}>Bearbeiten</button>
-                        <button onClick={() => fahrzeugAktivAendern(f.id, f.aktiv)}>
-                          {f.aktiv ? "Deaktivieren" : "Aktivieren"}
-                        </button>
-                        <button onClick={() => setQrFahrzeug(f)}>QR anzeigen</button>
-                        <button className="smallDelete" onClick={() => fahrzeugLoeschen(f.id)}>
-                          Löschen
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          ))}
-        </section>
+      <LiveMap
+        zeiten={zeiten.filter(
+          (z) =>
+            z.status === "eingestempelt" &&
+            z.fahrzeug?.toLowerCase().includes(kartenSuche.toLowerCase())
+        )}
+      />
+    </>
+  )}
+</section>  
 
         {qrFahrzeug && (
           <div className="qrOverlay" onClick={() => setQrFahrzeug(null)}>
@@ -806,6 +774,18 @@ const [zeigeFahrzeuge, setZeigeFahrzeuge] = useState(false);
         a { color: #0f2f6e; font-weight: bold; text-decoration: underline; }
         .formGrid { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; margin-bottom: 16px; }
         .gridCards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-bottom: 18px; }
+        .toggleTitle {
+  width: 100%;
+  background: transparent;
+  color: #0f2f6e;
+  border: none;
+  text-align: left;
+  font-size: 24px;
+  font-weight: 900;
+  padding: 0;
+  margin-bottom: 12px;
+  box-shadow: none;
+}
         .miniCard { background: #f8fafc; border-radius: 16px; padding: 14px; border-left: 6px solid #16a34a; }
         .miniCard.inactive { opacity: 0.55; border-left-color: #dc2626; }
         .miniCard strong { display: block; font-size: 18px; }
