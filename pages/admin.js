@@ -581,6 +581,7 @@ export default function Admin() {
                 <th>Datum</th>
                 <th>Fahrzeug</th>
                 <th>Mitarbeiter</th>
+                <th>Beifahrer</th>
                 <th>Start</th>
                 <th>Ende</th>
                 <th>Dauer</th>
@@ -596,6 +597,7 @@ export default function Admin() {
                   <td>{formatZeit(z.startzeit).split(",")[0]}</td>
                   <td><strong>{z.fahrzeug}</strong></td>
                   <td>{z.mitarbeiter}</td>
+                <td>{z.beifahrer || "-"}</td>
                   <td>{formatZeit(z.startzeit)}</td>
                   <td>{formatZeit(z.endzeit)}</td>
                   <td>{dauerText(z.startzeit, z.endzeit)}</td>
