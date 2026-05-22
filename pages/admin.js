@@ -70,6 +70,7 @@ export default function Admin() {
   const [zeigeKarte, setZeigeKarte] = useState(false);
   const [zeigeMitarbeiter, setZeigeMitarbeiter] = useState(false);
   const [zeigeFahrzeuge, setZeigeFahrzeuge] = useState(false);
+  const [zeigeHistorie, setZeigeHistorie] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
