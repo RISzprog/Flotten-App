@@ -227,6 +227,13 @@ export default function Home() {
                 </option>
               ))}
             </select>
+              <label>Beifahrer (optional)</label>
+
+<input
+  placeholder="Name Beifahrer"
+  value={beifahrer}
+  onChange={(e) => setBeifahrer(e.target.value)}
+/>
 
             <button className="green" onClick={abholen}>
               Abholen
