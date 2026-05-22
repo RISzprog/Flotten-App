@@ -60,6 +60,9 @@ export default function Admin() {
   const [meldung, setMeldung] = useState("");
   const [suche, setSuche] = useState("");
   const [fahrzeugFilter, setFahrzeugFilter] = useState("");
+  const [zeigeKarte, setZeigeKarte] = useState(false);
+const [zeigeMitarbeiter, setZeigeMitarbeiter] = useState(false);
+const [zeigeFahrzeuge, setZeigeFahrzeuge] = useState(false);
   const [kartenSuche, setKartenSuche] = useState("");
   const [datumFilter, setDatumFilter] = useState("");
   const [nurAktive, setNurAktive] = useState(false);
