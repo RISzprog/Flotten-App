@@ -35,17 +35,11 @@ function dauerMinuten(start, ende) {
 function dauerText(start, ende) {
   const minuten = dauerMinuten(start, ende);
   if (!minuten) return "-";
-
-  const stunden = Math.floor(minuten / 60);
-  const rest = minuten % 60;
-
-  return `${stunden}h ${rest}min`;
+  return `${Math.floor(minuten / 60)}h ${minuten % 60}min`;
 }
 
 function minutenZuText(minuten) {
-  const stunden = Math.floor(minuten / 60);
-  const rest = minuten % 60;
-  return `${stunden}h ${rest}min`;
+  return `${Math.floor(minuten / 60)}h ${minuten % 60}min`;
 }
 
 export default function Admin() {
@@ -145,11 +139,8 @@ export default function Admin() {
   }
 
   function fahrzeugLink(f) {
-    const basis =
-      typeof window !== "undefined" ? window.location.origin : "";
-
+    const basis = typeof window !== "undefined" ? window.location.origin : "";
     const code = f.kennzeichen || f.name;
-
     return `${basis}/?fahrzeug=${encodeURIComponent(code)}`;
   }
 
@@ -158,6 +149,7 @@ export default function Admin() {
       fahrzeugLink(f)
     )}`;
   }
+
   function csvExportieren() {
     const kopf = [
       "Datum",
@@ -189,9 +181,7 @@ export default function Admin() {
       "\uFEFF" +
       [kopf, ...zeilen]
         .map((reihe) =>
-          reihe
-            .map((feld) => `"${String(feld).replaceAll('"', '""')}"`)
-            .join(";")
+          reihe.map((feld) => `"${String(feld).replaceAll('"', '""')}"`).join(";")
         )
         .join("\n");
 
@@ -200,9 +190,7 @@ export default function Admin() {
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = `RIS_Flotten_Export_${new Date()
-      .toISOString()
-      .slice(0, 10)}.csv`;
+    link.download = `RIS_Flotten_Export_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
 
     URL.revokeObjectURL(url);
@@ -240,10 +228,7 @@ export default function Admin() {
     if (!neuerName) return;
 
     const neuesKennz = window.prompt("Kennzeichen:", f.kennzeichen || "");
-    const neueKat = window.prompt(
-      "Kategorie: PKW, Transporter oder Anhänger",
-      f.kategorie || "PKW"
-    );
+    const neueKat = window.prompt("Kategorie: PKW, Transporter oder Anhänger", f.kategorie || "PKW");
 
     await supabase
       .from("fahrzeuge")
@@ -258,17 +243,12 @@ export default function Admin() {
   }
 
   async function fahrzeugAktivAendern(id, aktiv) {
-    await supabase
-      .from("fahrzeuge")
-      .update({ aktiv: !aktiv })
-      .eq("id", id);
-
+    await supabase.from("fahrzeuge").update({ aktiv: !aktiv }).eq("id", id);
     fahrzeugeLaden();
   }
 
   async function fahrzeugLoeschen(id) {
     if (!window.confirm("Fahrzeug wirklich löschen?")) return;
-
     await supabase.from("fahrzeuge").delete().eq("id", id);
     fahrzeugeLaden();
   }
@@ -311,56 +291,35 @@ export default function Admin() {
   }
 
   async function mitarbeiterAktivAendern(id, aktiv) {
-    await supabase
-      .from("mitarbeiter")
-      .update({ aktiv: !aktiv })
-      .eq("id", id);
-
+    await supabase.from("mitarbeiter").update({ aktiv: !aktiv }).eq("id", id);
     mitarbeiterLaden();
   }
 
   async function mitarbeiterLoeschen(id) {
     if (!window.confirm("Mitarbeiter wirklich löschen?")) return;
-
     await supabase.from("mitarbeiter").delete().eq("id", id);
     mitarbeiterLaden();
   }
 
   async function eintragLoeschen(id) {
     if (!window.confirm("Diesen Eintrag löschen?")) return;
-
     await supabase.from("zeiten").delete().eq("id", id);
     laden();
   }
+
   const fahrzeugNamen = useMemo(() => {
     return fahrzeuge.map((f) => f.name).filter(Boolean).sort();
   }, [fahrzeuge]);
 
   const gefilterteZeiten = useMemo(() => {
     return zeiten.filter((z) => {
-      if (
-        fahrzeugFilter &&
-        !String(z.fahrzeug || "").includes(fahrzeugFilter)
-      ) {
-        return false;
-      }
-
-      if (datumFilter && formatDatum(z.startzeit) !== datumFilter) {
-        return false;
-      }
-
-      if (nurAktive && z.status !== "eingestempelt") {
-        return false;
-      }
+      if (fahrzeugFilter && !String(z.fahrzeug || "").includes(fahrzeugFilter)) return false;
+      if (datumFilter && formatDatum(z.startzeit) !== datumFilter) return false;
+      if (nurAktive && z.status !== "eingestempelt") return false;
 
       if (suche) {
-        const text = `${z.mitarbeiter || ""} ${z.beifahrer || ""} ${
-          z.fahrzeug || ""
-        }`.toLowerCase();
-
-        if (!text.includes(suche.toLowerCase())) {
-          return false;
-        }
+        const text = `${z.mitarbeiter || ""} ${z.beifahrer || ""} ${z.fahrzeug || ""}`.toLowerCase();
+        if (!text.includes(suche.toLowerCase())) return false;
       }
 
       return true;
@@ -413,13 +372,7 @@ export default function Admin() {
           .page {
             min-height: 100vh;
             font-family: Arial, sans-serif;
-            background: linear-gradient(
-              90deg,
-              #2f5fb3 0%,
-              #4f7fd8 42%,
-              #f3a24d 72%,
-              #ef7d22 100%
-            );
+            background: linear-gradient(90deg, #2f5fb3 0%, #4f7fd8 42%, #f3a24d 72%, #ef7d22 100%);
           }
 
           .loginPage {
@@ -479,151 +432,301 @@ export default function Admin() {
       </div>
     );
   }
-    const fahrzeugNamen = useMemo(() => {
-    return fahrzeuge.map((f) => f.name).filter(Boolean).sort();
-  }, [fahrzeuge]);
 
-  const gefilterteZeiten = useMemo(() => {
-    return zeiten.filter((z) => {
-      if (
-        fahrzeugFilter &&
-        !String(z.fahrzeug || "").includes(fahrzeugFilter)
-      ) {
-        return false;
-      }
-
-      if (datumFilter && formatDatum(z.startzeit) !== datumFilter) {
-        return false;
-      }
-
-      if (nurAktive && z.status !== "eingestempelt") {
-        return false;
-      }
-
-      if (suche) {
-        const text = `${z.mitarbeiter || ""} ${z.beifahrer || ""} ${
-          z.fahrzeug || ""
-        }`.toLowerCase();
-
-        if (!text.includes(suche.toLowerCase())) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }, [zeiten, fahrzeugFilter, datumFilter, nurAktive, suche]);
-
-  const heute = new Date().toISOString().slice(0, 10);
-
-  const startWoche = new Date();
-  startWoche.setDate(startWoche.getDate() - startWoche.getDay() + 1);
-  const wochenStartText = startWoche.toISOString().slice(0, 10);
-
-  const minutenHeute = zeiten
-    .filter((z) => formatDatum(z.startzeit) === heute)
-    .reduce((summe, z) => summe + dauerMinuten(z.startzeit, z.endzeit), 0);
-
-  const minutenWoche = zeiten
-    .filter((z) => formatDatum(z.startzeit) >= wochenStartText)
-    .reduce((summe, z) => summe + dauerMinuten(z.startzeit, z.endzeit), 0);
-
-  const aktiveZeiten = zeiten.filter((z) => z.status === "eingestempelt");
-
-  if (!session) {
-    return (
-      <div className="page loginPage">
-        <div className="loginBox">
+  return (
+    <div className="page">
+      <div className="wrap">
+        <header>
           <div className="logo">RIS</div>
-          <h1>Admin Login</h1>
+          <h1>RIS Admin</h1>
+        </header>
 
-          <input
-            type="email"
-            placeholder="Admin Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-
-          <input
-            type="password"
-            placeholder="Passwort"
-            value={passwort}
-            onChange={(e) => setPasswort(e.target.value)}
-          />
-
-          <button onClick={login}>Einloggen</button>
-
-          {meldung && <p>{meldung}</p>}
+        <div className="topActions">
+          <button className="refresh" onClick={allesLaden}>Aktualisieren</button>
+          <button className="export" onClick={csvExportieren}>CSV Export</button>
+          <button className="logout" onClick={logout}>Logout</button>
         </div>
 
-        <style jsx>{`
-          .page {
-            min-height: 100vh;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(
-              90deg,
-              #2f5fb3 0%,
-              #4f7fd8 42%,
-              #f3a24d 72%,
-              #ef7d22 100%
-            );
-          }
+        {meldung && <div className="message">{meldung}</div>}
 
-          .loginPage {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-          }
+        <div className="dashboardGrid">
+          <div className="dashboardCard">
+            <span>🚗 Fahrzeuge unterwegs</span>
+            <strong>{aktiveZeiten.length}</strong>
+          </div>
 
-          .loginBox {
-            background: rgba(255, 255, 255, 0.94);
-            padding: 28px;
-            border-radius: 24px;
-            width: 360px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
-            text-align: center;
-            color: #0f2f6e;
-          }
+          <div className="dashboardCard">
+            <span>✅ Fahrzeuge verfügbar</span>
+            <strong>
+              {
+                fahrzeuge.filter((f) => {
+                  const unterwegs = aktiveZeiten.some((z) =>
+                    String(z.fahrzeug || "").includes(f.name)
+                  );
+                  return f.aktiv && !unterwegs;
+                }).length
+              }
+            </strong>
+          </div>
 
-          .logo {
-            margin: 0 auto 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 86px;
-            height: 50px;
-            border-radius: 14px;
-            background: white;
-            color: #0f2f6e;
-            font-size: 30px;
-            font-weight: 900;
-            border-bottom: 5px solid #f97316;
-          }
+          <div className="dashboardCard">
+            <span>👷 Aktive Mitarbeiter</span>
+            <strong>{aktiveZeiten.length}</strong>
 
-          input {
-            width: 100%;
-            padding: 14px;
-            margin: 10px 0;
-            font-size: 18px;
-            border-radius: 12px;
-            border: 1px solid #cbd5e1;
-            box-sizing: border-box;
-          }
+            <div className="liveList">
+              {aktiveZeiten.map((z) => (
+                <div key={z.id}>
+                  {z.mitarbeiter} → {z.fahrzeug}
+                </div>
+              ))}
+            </div>
+          </div>
 
-          button {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 12px;
-            background: #0f2f6e;
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 10px;
-          }
-        `}</style>
- 
+          <div className="dashboardCard">
+            <span>⏱️ Stunden heute</span>
+            <strong>{minutenZuText(minutenHeute)}</strong>
+          </div>
+
+          <div className="dashboardCard">
+            <span>📆 Stunden Woche</span>
+            <strong>{minutenZuText(minutenWoche)}</strong>
+          </div>
+
+          <div className="dashboardCard">
+            <span>📍 Letzte Abholung</span>
+            <strong>{zeiten.length > 0 ? formatZeit(zeiten[0].startzeit) : "-"}</strong>
+          </div>
+        </div>
+
+        <div className="filters">
+          <input
+            placeholder="Suche Mitarbeiter/Beifahrer/Fahrzeug/Kennzeichen"
+            value={suche}
+            onChange={(e) => setSuche(e.target.value)}
+          />
+
+          <select value={fahrzeugFilter} onChange={(e) => setFahrzeugFilter(e.target.value)}>
+            <option value="">Alle Fahrzeuge</option>
+            {fahrzeugNamen.map((f) => (
+              <option key={f} value={f}>{f}</option>
+            ))}
+          </select>
+
+          <input
+            type="date"
+            value={datumFilter}
+            onChange={(e) => setDatumFilter(e.target.value)}
+          />
+
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={nurAktive}
+              onChange={(e) => setNurAktive(e.target.checked)}
+            />
+            Nur aktive
+          </label>
+        </div>
+
+        <div className="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Fahrzeug</th>
+                <th>Mitarbeiter</th>
+                <th>Beifahrer</th>
+                <th>Start</th>
+                <th>Ende</th>
+                <th>Dauer</th>
+                <th>GPS</th>
+                <th>Status</th>
+                <th>Aktion</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {gefilterteZeiten.map((z) => (
+                <tr key={z.id}>
+                  <td>{formatZeit(z.startzeit).split(",")[0]}</td>
+                  <td><strong>{z.fahrzeug}</strong></td>
+                  <td>{z.mitarbeiter}</td>
+                  <td>{z.beifahrer || "-"}</td>
+                  <td>{formatZeit(z.startzeit)}</td>
+                  <td>{formatZeit(z.endzeit)}</td>
+                  <td>{dauerText(z.startzeit, z.endzeit)}</td>
+
+                  <td>
+                    {z.latitude && z.longitude ? (
+                      <a
+                        href={`https://www.google.com/maps?q=${z.latitude},${z.longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Karte öffnen
+                      </a>
+                    ) : (
+                      <span className="muted">GPS deaktiviert</span>
+                    )}
+                  </td>
+
+                  <td>
+                    <span className={z.status === "eingestempelt" ? "badge green" : "badge red"}>
+                      {z.status === "eingestempelt" ? "Abgeholt" : "Abgegeben"}
+                    </span>
+                  </td>
+
+                  <td>
+                    <button className="delete" onClick={() => eintragLoeschen(z.id)}>
+                      Löschen
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <section className="box">
+          <button className="toggleTitle" onClick={() => setZeigeKarte(!zeigeKarte)}>
+            {zeigeKarte ? "▼" : "▶"} Live-Karte GPS
+          </button>
+
+          {zeigeKarte && (
+            <>
+              <input
+                className="mapSearch"
+                placeholder="Fahrzeug auf Karte suchen..."
+                value={kartenSuche}
+                onChange={(e) => setKartenSuche(e.target.value)}
+              />
+
+              <LiveMap
+                zeiten={aktiveZeiten.filter((z) =>
+                  String(z.fahrzeug || "")
+                    .toLowerCase()
+                    .includes(kartenSuche.toLowerCase())
+                )}
+              />
+            </>
+          )}
+        </section>
+
+        <section className="box">
+          <button
+            className="toggleTitle"
+            onClick={() => setZeigeMitarbeiter(!zeigeMitarbeiter)}
+          >
+            {zeigeMitarbeiter ? "▼" : "▶"} Mitarbeiter verwalten
+          </button>
+
+          {zeigeMitarbeiter && (
+            <>
+              <div className="formGrid">
+                <input
+                  placeholder="Vorname"
+                  value={neuerVorname}
+                  onChange={(e) => setNeuerVorname(e.target.value)}
+                />
+
+                <input
+                  placeholder="Nachname"
+                  value={neuerNachname}
+                  onChange={(e) => setNeuerNachname(e.target.value)}
+                />
+
+                <button className="add" onClick={mitarbeiterHinzufuegen}>
+                  Mitarbeiter hinzufügen
+                </button>
+              </div>
+
+              <div className="gridCards">
+                {mitarbeiter.map((m) => (
+                  <div key={m.id} className={m.aktiv ? "miniCard" : "miniCard inactive"}>
+                    <strong>{m.vorname} {m.nachname}</strong>
+                    <span>{m.aktiv ? "aktiv" : "deaktiviert"}</span>
+
+                    <div className="miniButtons">
+                      <button onClick={() => mitarbeiterBearbeiten(m)}>Bearbeiten</button>
+                      <button onClick={() => mitarbeiterAktivAendern(m.id, m.aktiv)}>
+                        {m.aktiv ? "Deaktivieren" : "Aktivieren"}
+                      </button>
+                      <button className="smallDelete" onClick={() => mitarbeiterLoeschen(m.id)}>
+                        Löschen
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+
+        <section className="box">
+          <button
+            className="toggleTitle"
+            onClick={() => setZeigeFahrzeuge(!zeigeFahrzeuge)}
+          >
+            {zeigeFahrzeuge ? "▼" : "▶"} Fahrzeuge verwalten
+          </button>
+
+          {zeigeFahrzeuge && (
+            <>
+              <div className="formGrid">
+                <input
+                  placeholder="Fahrzeugname"
+                  value={neuesFahrzeug}
+                  onChange={(e) => setNeuesFahrzeug(e.target.value)}
+                />
+
+                <input
+                  placeholder="Kennzeichen"
+                  value={neuesKennzeichen}
+                  onChange={(e) => setNeuesKennzeichen(e.target.value)}
+                />
+
+                <select value={neueKategorie} onChange={(e) => setNeueKategorie(e.target.value)}>
+                  <option value="PKW">PKW</option>
+                  <option value="Transporter">Transporter</option>
+                  <option value="Anhänger">Anhänger</option>
+                </select>
+
+                <button className="add" onClick={fahrzeugHinzufuegen}>
+                  Fahrzeug hinzufügen
+                </button>
+              </div>
+
+              {["PKW", "Transporter", "Anhänger"].map((kat) => (
+                <div key={kat}>
+                  <h3>{kat}</h3>
+
+                  <div className="gridCards">
+                    {fahrzeuge
+                      .filter((f) => (f.kategorie || "PKW") === kat)
+                      .map((f) => (
+                        <div key={f.id} className={f.aktiv ? "miniCard" : "miniCard inactive"}>
+                          <strong>{f.name}</strong>
+                          <span>{f.kennzeichen || "kein Kennzeichen"}</span>
+
+                          <div className="miniButtons">
+                            <button onClick={() => fahrzeugBearbeiten(f)}>Bearbeiten</button>
+                            <button onClick={() => fahrzeugAktivAendern(f.id, f.aktiv)}>
+                              {f.aktiv ? "Deaktivieren" : "Aktivieren"}
+                            </button>
+                            <button onClick={() => setQrFahrzeug(f)}>QR anzeigen</button>
+                            <button className="smallDelete" onClick={() => fahrzeugLoeschen(f.id)}>
+                              Löschen
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </section>
+
         {qrFahrzeug && (
           <div className="qrOverlay" onClick={() => setQrFahrzeug(null)}>
             <div className="qrBox" onClick={(e) => e.stopPropagation()}>
@@ -634,10 +737,7 @@ export default function Admin() {
 
               <p className="qrLink">{fahrzeugLink(qrFahrzeug)}</p>
 
-              <button
-                className="refresh"
-                onClick={() => window.open(qrBildUrl(qrFahrzeug), "_blank")}
-              >
+              <button className="refresh" onClick={() => window.open(qrBildUrl(qrFahrzeug), "_blank")}>
                 QR öffnen
               </button>
 
@@ -647,33 +747,7 @@ export default function Admin() {
             </div>
           </div>
         )}
-<section className="box">
-  <button
-    className="toggleTitle"
-    onClick={() => setZeigeKarte(!zeigeKarte)}
-  >
-    {zeigeKarte ? "▼" : "▶"} Live-Karte GPS
-  </button>
 
-  {zeigeKarte && (
-    <>
-      <input
-        className="mapSearch"
-        placeholder="Fahrzeug auf Karte suchen..."
-        value={kartenSuche}
-        onChange={(e) => setKartenSuche(e.target.value)}
-      />
-
-      <LiveMap
-        zeiten={aktiveZeiten.filter((z) =>
-          String(z.fahrzeug || "")
-            .toLowerCase()
-            .includes(kartenSuche.toLowerCase())
-        )}
-      />
-    </>
-  )}
-</section>
         <footer>© RIS 2026</footer>
       </div>
 
@@ -682,13 +756,7 @@ export default function Admin() {
           min-height: 100vh;
           padding: 24px;
           font-family: Arial, sans-serif;
-          background: linear-gradient(
-            90deg,
-            #2f5fb3 0%,
-            #4f7fd8 42%,
-            #f3a24d 72%,
-            #ef7d22 100%
-          );
+          background: linear-gradient(90deg, #2f5fb3 0%, #4f7fd8 42%, #f3a24d 72%, #ef7d22 100%);
           color: #0f2f6e;
         }
 
