@@ -527,7 +527,15 @@ export default function Admin() {
             Nur aktive
           </label>
         </div>
+<section className="box">
+  <button
+    className="toggleTitle"
+    onClick={() => setZeigeHistorie(!zeigeHistorie)}
+  >
+    {zeigeHistorie ? "▼" : "▶"} Fahrten / Historie
+  </button>
 
+  {zeigeHistorie && (
         <div className="tableWrap">
           <table>
             <thead>
@@ -586,7 +594,8 @@ export default function Admin() {
             </tbody>
           </table>
         </div>
-
+  )}
+</section>
         <section className="box">
           <button className="toggleTitle" onClick={() => setZeigeKarte(!zeigeKarte)}>
             {zeigeKarte ? "▼" : "▶"} Live-Karte GPS
