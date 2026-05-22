@@ -651,7 +651,7 @@ export default function Admin() {
                 )}
               />
             </>
-         
+         )}
         </section>
 
         <section className="box">
