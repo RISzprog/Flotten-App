@@ -627,71 +627,7 @@ export default function Admin() {
  
      
 
-        <section className="box">
-          <button
-            className="toggleTitle"
-            onClick={() => setZeigeMitarbeiter(!zeigeMitarbeiter)}
-          >
-            {zeigeMitarbeiter ? "▼" : "▶"} Mitarbeiter verwalten
-          </button>
-
-          {zeigeMitarbeiter && (
-            <>
-              <div className="formGrid">
-                <input
-                  placeholder="Vorname"
-                  value={neuerVorname}
-                  onChange={(e) => setNeuerVorname(e.target.value)}
-                />
-
-                <input
-                  placeholder="Nachname"
-                  value={neuerNachname}
-                  onChange={(e) => setNeuerNachname(e.target.value)}
-                />
-
-                <button className="add" onClick={mitarbeiterHinzufuegen}>
-                  Mitarbeiter hinzufügen
-                </button>
-              </div>
-
-              <div className="gridCards">
-                {mitarbeiter.map((m) => (
-                  <div
-                    key={m.id}
-                    className={m.aktiv ? "miniCard" : "miniCard inactive"}
-                  >
-                    <strong>
-                      {m.vorname} {m.nachname}
-                    </strong>
-                    <span>{m.aktiv ? "aktiv" : "deaktiviert"}</span>
-
-                    <div className="miniButtons">
-                      <button onClick={() => mitarbeiterBearbeiten(m)}>
-                        Bearbeiten
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          mitarbeiterAktivAendern(m.id, m.aktiv)
-                        }
-                      >
-                        {m.aktiv ? "Deaktivieren" : "Aktivieren"}
-                      </button>
-
-                      <button
-                        className="smallDelete"
-                        onClick={() => mitarbeiterLoeschen(m.id)}
-                      >
-                        Löschen
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </section>
+       
 
         <section className="box">
           <button
