@@ -546,21 +546,7 @@ export default function Admin() {
         </div>
 
     
-<section className="box">
-  <h2>Live-Karte GPS</h2>
- <input
-  placeholder="Fahrzeug auf Karte suchen..."
-  value={kartenSuche}
-  onChange={(e) => setKartenSuche(e.target.value)}
-/> 
-  <LiveMap
-  zeiten={zeiten.filter(
-    (z) =>
-      z.status === "eingestempelt" &&
-      z.fahrzeug?.toLowerCase().includes(kartenSuche.toLowerCase())
-  )}
-/>
-</section>
+
         <div className="filters">
           <input
             placeholder="Suche Mitarbeiter/Fahrzeug/Kennzeichen"
@@ -653,6 +639,21 @@ export default function Admin() {
           </table>
         </div>
         <section className="box">
+                <section className="box">
+  <h2>Live-Karte GPS</h2>
+ <input
+  placeholder="Fahrzeug auf Karte suchen..."
+  value={kartenSuche}
+  onChange={(e) => setKartenSuche(e.target.value)}
+/> 
+  <LiveMap
+  zeiten={zeiten.filter(
+    (z) =>
+      z.status === "eingestempelt" &&
+      z.fahrzeug?.toLowerCase().includes(kartenSuche.toLowerCase())
+  )}
+/>
+</section>
           <h2>Mitarbeiter verwalten</h2>
 
           <div className="formGrid">
