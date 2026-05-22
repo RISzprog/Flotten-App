@@ -623,7 +623,6 @@ export default function Admin() {
             margin-top: 10px;
           }
         `}</style>
-      </div>
  
         {qrFahrzeug && (
           <div className="qrOverlay" onClick={() => setQrFahrzeug(null)}>
