@@ -548,7 +548,18 @@ export default function Admin() {
     
 <section className="box">
   <h2>Live-Karte GPS</h2>
-  <LiveMap zeiten={zeiten.filter((z) => z.status === "eingestempelt")} />
+ <input
+  placeholder="Fahrzeug auf Karte suchen..."
+  value={kartenSuche}
+  onChange={(e) => setKartenSuche(e.target.value)}
+/> 
+  <LiveMap
+  zeiten={zeiten.filter(
+    (z) =>
+      z.status === "eingestempelt" &&
+      z.fahrzeug?.toLowerCase().includes(kartenSuche.toLowerCase())
+  )}
+/>
 </section>
         <div className="filters">
           <input
