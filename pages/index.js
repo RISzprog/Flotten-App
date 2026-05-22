@@ -125,6 +125,7 @@ export default function Home() {
       {
         mitarbeiter,
         fahrzeug,
+        beifahrer,
         startzeit: new Date().toISOString(),
         latitude: gps?.latitude || "",
         longitude: gps?.longitude || "",
