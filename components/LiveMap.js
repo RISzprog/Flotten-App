@@ -23,7 +23,7 @@ export default function LiveMap({ zeiten }) {
   const erster = punkte[0];
 
   return (
-    <div style={{ height: "260px", width: "100%", borderRadius: "20px", overflow: "hidden" }}>
+    <div style={{ height: "480px", width: "100%", borderRadius: "20px", overflow: "hidden" }}>
       <MapContainer
         center={[Number(erster.latitude), Number(erster.longitude)]}
         zoom={12}
