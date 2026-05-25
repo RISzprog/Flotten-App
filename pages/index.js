@@ -106,6 +106,30 @@ export default function Home() {
       return;
     }
 
+    const { data: aktiveFahrt } = await supabase
+  .from("zeiten")
+  .select("*")
+  .eq("fahrzeug", fahrzeug)
+  .eq("status", "eingestempelt")
+  .maybeSingle();
+
+if (aktiveFahrt) {
+  setMeldung("❌ Fahrzeug bereits unterwegs");
+  return;
+}
+
+const { data: mitarbeiterAktiv } = await supabase
+  .from("zeiten")
+  .select("*")
+  .eq("mitarbeiter", mitarbeiter)
+  .eq("status", "eingestempelt")
+  .maybeSingle();
+
+if (mitarbeiterAktiv) {
+  setMeldung("❌ Mitarbeiter hat bereits ein Fahrzeug");
+  return;
+}
+
     const { data: offene } = await supabase
       .from("zeiten")
       .select("*")
