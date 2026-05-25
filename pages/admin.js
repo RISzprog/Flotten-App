@@ -94,9 +94,24 @@ useEffect(() => {
     }
   );
 
-  return () => {
-    listener.subscription.unsubscribe();
-  };
+  const channel = supabase
+  .channel("live-zeiten")
+  .on(
+    "postgres_changes",
+    {
+      event: "*",
+      schema: "public",
+      table: "zeiten"
+    },
+    () => {
+      allesLaden();
+    }
+  )
+  .subscribe();
+ return () => {
+  listener.subscription.unsubscribe();
+  supabase.removeChannel(channel);
+};
 }, []);
 
 async function ladeRolle(email) {
