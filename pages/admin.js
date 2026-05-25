@@ -439,6 +439,18 @@ export default function Admin() {
       </div>
     );
   }
+  if (rolle && rolle !== "admin") {
+  return (
+    <div className="page loginPage">
+      <div className="loginBox">
+        <div className="logo">RIS</div>
+        <h1>Kein Zugriff</h1>
+        <p>Du bist nicht als Admin freigeschaltet.</p>
+        <button onClick={logout}>Logout</button>
+      </div>
+    </div>
+  );
+}
 
   return (
     <div className="page">
