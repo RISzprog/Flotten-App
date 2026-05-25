@@ -44,6 +44,7 @@ function minutenZuText(minuten) {
 
 export default function Admin() {
   const [session, setSession] = useState(null);
+  const [rolle, setRolle] = useState("");
   const [email, setEmail] = useState("");
   const [passwort, setPasswort] = useState("");
 
@@ -72,11 +73,26 @@ export default function Admin() {
   const [zeigeFahrzeuge, setZeigeFahrzeuge] = useState(false);
   const [zeigeHistorie, setZeigeHistorie] = useState(true);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      if (data.session) allesLaden();
-    });
+useEffect(() => {
+  supabase.auth.getSession().then(({ data }) => {
+    setSession(data.session);
+
+    if (data.session) {
+      rolleLaden(data.session.user.email);
+      allesLaden();
+    }
+  });
+}, []);
+
+async function rolleLaden(email) {
+  const { data } = await supabase
+    .from("user_roles")
+    .select("rolle")
+    .eq("email", email)
+    .single();
+
+  if (data) setRolle(data.rolle);
+}
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, newSession) => {
