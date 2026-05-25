@@ -77,22 +77,37 @@ export default function Admin() {
   supabase.auth.getSession().then(({ data }) => {
     setSession(data.session);
 
-    if (data.session) {
-      rolleLaden(data.session.user.email);
+ if (data.session) {
+  ladeRolle(data.session.user.email);
+  allesLaden();
+}
+});
+
+const { data: listener } = supabase.auth.onAuthStateChange(
+  (_event, newSession) => {
+    setSession(newSession);
+
+    if (newSession) {
+      ladeRolle(newSession.user.email);
       allesLaden();
     }
-  });
+  }
+);
 
-  const { data: listener } = supabase.auth.onAuthStateChange(
-    (_event, newSession) => {
-      setSession(newSession);
+return () => {
+  listener.subscription.unsubscribe();
+};
+}, []);
 
-      if (newSession) {
-        rolleLaden(newSession.user.email);
-        allesLaden();
-      }
-    }
-  );
+async function ladeRolle(email) {
+  const { data } = await supabase
+    .from("user_roles")
+    .select("rolle")
+    .eq("email", email)
+    .single();
+
+    if (data) setRolle(data.rolle);
+}
 
   return () => {
     listener.subscription.unsubscribe();
