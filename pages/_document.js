@@ -4,6 +4,9 @@ export default function Document() {
   return (
     <Html lang="de">
       <Head>
+        <title>RIS Flotten App</title>
+        <meta name="application-name" content="RIS Flotten App" />
+    
         <meta name="theme-color" content="#0f2f6e" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
