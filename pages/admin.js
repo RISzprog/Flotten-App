@@ -94,17 +94,18 @@ async function rolleLaden(email) {
   if (data) setRolle(data.rolle);
 }
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
-        setSession(newSession);
-        if (newSession) allesLaden();
-      }
-    );
+ const { data: listener } = supabase.auth.onAuthStateChange(
+  (_event, newSession) => {
+    setSession(newSession);
 
-    return () => {
-      listener.subscription.unsubscribe();
-    };
-  }, []);
+    if (newSession) allesLaden();
+  }
+);
+
+return () => {
+  listener.subscription.unsubscribe();
+};
+}, []);
 
   async function login() {
     setMeldung("");
