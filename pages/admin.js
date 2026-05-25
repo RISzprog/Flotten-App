@@ -73,30 +73,30 @@ export default function Admin() {
   const [zeigeFahrzeuge, setZeigeFahrzeuge] = useState(false);
   const [zeigeHistorie, setZeigeHistorie] = useState(true);
 
- useEffect(() => {
+useEffect(() => {
   supabase.auth.getSession().then(({ data }) => {
     setSession(data.session);
 
- if (data.session) {
-  ladeRolle(data.session.user.email);
-  allesLaden();
-}
-});
-
-const { data: listener } = supabase.auth.onAuthStateChange(
-  (_event, newSession) => {
-    setSession(newSession);
-
-    if (newSession) {
-      ladeRolle(newSession.user.email);
+    if (data.session) {
+      ladeRolle(data.session.user.email);
       allesLaden();
     }
-  }
-);
+  });
 
-return () => {
-  listener.subscription.unsubscribe();
-};
+  const { data: listener } = supabase.auth.onAuthStateChange(
+    (_event, newSession) => {
+      setSession(newSession);
+
+      if (newSession) {
+        ladeRolle(newSession.user.email);
+        allesLaden();
+      }
+    }
+  );
+
+  return () => {
+    listener.subscription.unsubscribe();
+  };
 }, []);
 
 async function ladeRolle(email) {
@@ -106,15 +106,10 @@ async function ladeRolle(email) {
     .eq("email", email)
     .single();
 
-    if (data) setRolle(data.rolle);
+  if (data) setRolle(data.rolle);
 }
 
-  return () => {
-    listener.subscription.unsubscribe();
-  };
-}, []);
-
-  async function login() {
+async function login() {
     setMeldung("");
 
     const { error } = await supabase.auth.signInWithPassword({
