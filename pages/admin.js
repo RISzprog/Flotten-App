@@ -442,7 +442,7 @@ export default function Admin() {
       </div>
     );
   }
-  if (session && rolle !== "admin") {
+  if (session && rolle && rolle !== "admin") {
   return (
     <div className="page loginPage">
       <div className="loginBox">
