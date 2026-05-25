@@ -87,7 +87,10 @@ export default function Admin() {
     (_event, newSession) => {
       setSession(newSession);
 
-      if (newSession) allesLaden();
+      if (newSession) {
+        rolleLaden(newSession.user.email);
+        allesLaden();
+      }
     }
   );
 
