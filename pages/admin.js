@@ -73,7 +73,7 @@ export default function Admin() {
   const [zeigeFahrzeuge, setZeigeFahrzeuge] = useState(false);
   const [zeigeHistorie, setZeigeHistorie] = useState(true);
 
-useEffect(() => {
+ useEffect(() => {
   supabase.auth.getSession().then(({ data }) => {
     setSession(data.session);
 
@@ -82,29 +82,18 @@ useEffect(() => {
       allesLaden();
     }
   });
-}, []);
 
-async function rolleLaden(email) {
-  const { data } = await supabase
-    .from("user_roles")
-    .select("rolle")
-    .eq("email", email)
-    .single();
+  const { data: listener } = supabase.auth.onAuthStateChange(
+    (_event, newSession) => {
+      setSession(newSession);
 
-  if (data) setRolle(data.rolle);
-}
+      if (newSession) allesLaden();
+    }
+  );
 
- const { data: listener } = supabase.auth.onAuthStateChange(
-  (_event, newSession) => {
-    setSession(newSession);
-
-    if (newSession) allesLaden();
-  }
-);
-
-return () => {
-  listener.subscription.unsubscribe();
-};
+  return () => {
+    listener.subscription.unsubscribe();
+  };
 }, []);
 
   async function login() {
