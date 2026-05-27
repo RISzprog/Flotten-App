@@ -49,8 +49,7 @@ export default function Admin() {
   const [passwort, setPasswort] = useState("");
 
   const [auswahl, setAuswahl] = useState([]);
-  
-  const [auswahl, setAuswahl] = useState([]);
+
   const [zeiten, setZeiten] = useState([]);
   const [fahrzeuge, setFahrzeuge] = useState([]);
   const [mitarbeiter, setMitarbeiter] = useState([]);
