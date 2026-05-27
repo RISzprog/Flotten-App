@@ -611,6 +611,7 @@ async function login() {
           <table>
             <thead>
               <tr>
+                <th></th>
                 <th>Datum</th>
                 <th>Fahrzeug</th>
                 <th>Mitarbeiter</th>
@@ -627,6 +628,32 @@ async function login() {
             <tbody>
               {gefilterteZeiten.map((z) => (
                 <tr key={z.id}>
+          <td>
+           <input
+             type="checkbox"
+             checked={auswahl.includes(z.id)}
+             onChange={(e) => {
+               if (e.target.checked) {
+                 setAuswahl([...auswahl, z.id]);
+               } else {
+                 setAuswahl(auswahl.filter((id) => id !== z.id));
+               } 
+             }}
+           />
+        </td>
+                 <td>
+                  <input
+                   type="checkbox"
+                   checked={auswahl.includes(z.id)}
+                   onChange={(e) => {
+                    if (e.target.checked) {
+                     setAuswahl([...auswahl, z.id]);
+                    } else {
+                      setAuswahl(auswahl.filter((id) => id !== z.id));
+                    }
+                  }}
+                />
+              </td>
                   <td>{formatZeit(z.startzeit).split(",")[0]}</td>
                   <td><strong>{z.fahrzeug}</strong></td>
                   <td>{z.mitarbeiter}</td>
@@ -663,10 +690,13 @@ async function login() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          <button className="delete" onClick={mehrereLoeschen}>
+           Ausgewählte löschen
+           </button>
+         </table>
         </div>
-  )}
-</section>
+       )}
+       </section>
         <section className="box">
           <button className="toggleTitle" onClick={() => setZeigeKarte(!zeigeKarte)}>
             {zeigeKarte ? "▼" : "▶"} Live-Karte GPS
