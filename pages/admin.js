@@ -957,13 +957,16 @@ async function login() {
           margin-bottom: 12px;
         }
 
-        .dashboardGrid {
+        .statsGrid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-          gap: 16px;
-          margin-bottom: 22px;
+          grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+          gap: 10px;
         }
 
+        .page {
+          zoom: 0.88;
+        }
+        
         .dashboardCard {
           background: rgba(255, 255, 255, 0.94);
           border-radius: 22px;
