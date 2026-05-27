@@ -51,6 +51,11 @@ export default function Home() {
     const qrFahrzeug = decodeURIComponent(String(qr));
 
     const gefunden = fahrzeuge.find((f) => {
+      useEffect(() => {
+  if (router.query.fahrzeug) {
+    setFahrzeug(router.query.fahrzeug);
+  }
+}, [router.query]);
       const text = `${f.name} · ${f.kennzeichen || ""}`;
       return (
         text.includes(qrFahrzeug) ||
