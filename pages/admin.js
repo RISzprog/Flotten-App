@@ -1017,10 +1017,10 @@ async function login() {
           color: #0f2f6e;
           border: none;
           text-align: left;
-          font-size: 24px;
+          font-size: 16px;
           font-weight: 900;
           padding: 0;
-          margin-bottom: 12px;
+          margin-bottom: 4px;
           box-shadow: none;
         }
 
