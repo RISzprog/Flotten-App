@@ -144,7 +144,7 @@ async function login() {
 
   async function allesLaden() {
    await laden();
-   await fahrzeugLaden();
+   await fahrzeugeLaden();
    await mitarbeiterLaden();
   }
 
