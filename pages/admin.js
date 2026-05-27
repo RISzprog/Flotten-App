@@ -143,13 +143,18 @@ async function login() {
   }
 
   async function allesLaden() {
-    await laden();
-    await fahrzeugeLaden();
-    await mitarbeiterLaden();
-     setInterval(() => {
-     laden();
-     }, 5000);
+   await laden();
+   await fahrzeugLaden();
+   await mitarbeiterLaden();
   }
+
+   useEffect(() => {
+   const interval = setInterval(() => {
+    laden();
+  }, 5000);
+
+  return () => clearInterval(interval);
+  }, []);
 
   async function laden() {
     const { data, error } = await supabase
