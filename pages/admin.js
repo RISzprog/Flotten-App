@@ -146,6 +146,9 @@ async function login() {
     await laden();
     await fahrzeugeLaden();
     await mitarbeiterLaden();
+     setInterval(() => {
+     laden();
+     }, 5000);
   }
 
   async function laden() {
