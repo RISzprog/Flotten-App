@@ -1077,12 +1077,13 @@ async function login() {
           width: 100%;
           border-collapse: collapse;
           min-width: 1200px;
+          font-size: 12px;
         }
 
         th {
           background: #0f2f6e;
           color: white;
-          padding: 14px;
+          padding: 6px;
           text-align: left;
         }
 
