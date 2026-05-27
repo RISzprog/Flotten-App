@@ -284,11 +284,25 @@ async function login() {
     fahrzeugeLaden();
   }
 
-  async function fahrzeugLoeschen(id) {
-    if (!window.confirm("Fahrzeug wirklich löschen?")) return;
-    await supabase.from("fahrzeuge").delete().eq("id", id);
-    fahrzeugeLaden();
+  async function mehrereLoeschen() {
+  if (auswahl.length === 0) {
+    alert("Bitte Fahrten auswählen");
+    return;
   }
+
+  const ok = confirm("Ausgewählte Fahrten löschen?");
+
+  if (!ok) return;
+
+  await supabase
+    .from("zeiten")
+    .delete()
+    .in("id", auswahl);
+
+  setAuswahl([]);
+
+  allesLaden();
+}
 
   async function mitarbeiterHinzufuegen() {
     if (!neuerVorname.trim() || !neuerNachname.trim()) {
