@@ -467,19 +467,19 @@ async function login() {
           }
 
           .box {
-            padding: 18px !important;
-            margin-bottom: 18px !important;
+            padding: 10px !important;
+            margin-bottom: 10px !important;
             border-radius: 18px !important;
           }
 
            .toggleTitle {
-            font-size: 24px !important;
-            padding: 8px 0 !important;
+            font-size: 18px !important;
+            padding: 2px 0 !important;
           }
 
            .statCard {
-           padding: 18px !important;
-           min-height: 120px !important;
+           padding: 10px !important;
+           min-height: 80px !important;
           }
           input {
             width: 100%;
