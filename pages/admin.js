@@ -1076,7 +1076,11 @@ async function login() {
         table {
           width: 100%;
           border-collapse: collapse;
-          min-width: 1200px;
+          min-width: 1500px;
+        }
+
+        td {
+          white-space: nowrap;
         }
 
         th {
