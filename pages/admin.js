@@ -1077,6 +1077,7 @@ async function login() {
           width: 100%;
           border-collapse: collapse;
           min-width: 1000px;
+          font-size: 14px;
         }
 
         th {
@@ -1087,7 +1088,7 @@ async function login() {
         }
 
         td {
-          padding: 14px;
+          padding: 8px;
           border-bottom: 1px solid #e5e7eb;
         }
 
