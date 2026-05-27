@@ -1077,7 +1077,6 @@ async function login() {
           width: 100%;
           border-collapse: collapse;
           min-width: 1200px;
-          font-size: 12px;
         }
 
         th {
