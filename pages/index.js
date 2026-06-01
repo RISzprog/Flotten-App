@@ -269,12 +269,18 @@ if (mitarbeiterAktiv) {
   onChange={(e) => setBeifahrer(e.target.value)}
 />
 
-            <button className="green" onClick={abholen}>
+            <button
+              className={meldung.includes("Abgeholt") ? "green btnInaktiv" : "green btnAktiv"}
+              onClick={abholen}
+            >
               Abholen
             </button>
 
-            <button className="red" onClick={abgeben}>
-              Abgeben
+            <button
+             className={meldung.includes("Abgeholt") ? "red btnAktiv" : "red btnInaktiv"}
+             onClick={abgeben}
+            >
+             Abgeben
             </button>
 
             <div className="status">Status: {meldung}</div>
@@ -476,6 +482,14 @@ if (mitarbeiterAktiv) {
           }
         }
       `}</style>
+             .btnInaktiv {
+               opacity: 0.35;
+               filter: grayscale(50%);
+             }
+
+             .btnAktiv {
+               box-shadow: 0 0 20px rgba(255,255,255,0.8);
+             }  
     </div>
   );
 }
