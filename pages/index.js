@@ -479,17 +479,17 @@ if (mitarbeiterAktiv) {
 
           .thanks {
             display: none;
-          }
-        }
-      `}</style>
-             .btnInaktiv {
+           }
+           }
+           .btnInaktiv {
                opacity: 0.35;
                filter: grayscale(50%);
-             }
+           }
 
-             .btnAktiv {
+           .btnAktiv {
                box-shadow: 0 0 20px rgba(255,255,255,0.8);
-             }  
+           }
+      `}</style> 
     </div>
   );
 }
