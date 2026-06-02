@@ -22,6 +22,7 @@ export default function Home() {
   const [mitarbeiter, setMitarbeiter] = useState("");
 
   const [fahrzeuge, setFahrzeuge] = useState([]);
+  const [offeneFahrzeuge, setOffeneFahrzeuge] = useState([]);
   const [fahrzeug, setFahrzeug] = useState("");
   const [beifahrer, setBeifahrer] = useState("");
 
@@ -84,6 +85,13 @@ export default function Home() {
       .select("*")
       .eq("aktiv", true)
       .order("nachname", { ascending: true });
+
+    const { data: offene } = await supabase
+      .from("zeiten")
+      .select("fahrzeug")
+      .eq("status", "eingestempelt");
+
+   setOffeneFahrzeuge((offene || []).map((e) => e.fahrzeug));
 
     setFahrzeuge(fahrzeugDaten || []);
     setMitarbeiterListe(mitarbeiterDaten || []);
@@ -255,11 +263,16 @@ if (mitarbeiterAktiv) {
             <select value={fahrzeug} onChange={(e) => setFahrzeug(e.target.value)}>
               <option value="">Fahrzeug wählen</option>
 
-              {fahrzeuge.map((f) => (
-                <option key={f.id} value={`${f.name} · ${f.kennzeichen || ""}`}>
-                  {f.name} · {f.kennzeichen || "ohne Kennzeichen"}
-                </option>
-              ))}
+         {fahrzeuge.map((f) => {
+            const name = `${f.name} · ${f.kennzeichen || ""}`;
+            const istUnterwegs = offeneFahrzeuge.includes(name);
+
+            return (
+             <option key={f.id} value={name} disabled={istUnterwegs}>
+              {istUnterwegs ? `${name} - unterwegs` : name}
+            </option>
+            );
+          })}
             </select>
               <label>Beifahrer (optional)</label>
 
