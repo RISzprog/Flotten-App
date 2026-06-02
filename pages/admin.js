@@ -51,6 +51,7 @@ export default function Admin() {
   const [auswahl, setAuswahl] = useState([]);
 
   const [zeiten, setZeiten] = useState([]);
+  const [mapKey, setMapKey] = useState(0);
   const [fahrzeuge, setFahrzeuge] = useState([]);
   const [mitarbeiter, setMitarbeiter] = useState([]);
 
@@ -162,7 +163,9 @@ async function login() {
       .select("*")
       .order("startzeit", { ascending: false });
 
-    if (!error) setZeiten(data || []);
+  if (!error) {
+   setZeiten(data || []);
+   setMapKey((k) => k + 1);
   }
 
   async function fahrzeugeLaden() {
@@ -727,6 +730,7 @@ async function login() {
               />
 
               <LiveMap
+                key={mapKey}
                 zeiten={aktiveZeiten.filter((z) =>
                   String(z.fahrzeug || "")
                     .toLowerCase()
