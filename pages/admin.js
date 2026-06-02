@@ -644,68 +644,63 @@ async function login() {
             </thead>
 
             <tbody>
-              {gefilterteZeiten.map((z) => (
-                <tr key={z.id}>
-          <td>
-           <input
-             type="checkbox"
-             checked={auswahl.includes(z.id)}
-             onChange={(e) => {
-               if (e.target.checked) {
-                 setAuswahl([...auswahl, z.id]);
-               } else {
-                 setAuswahl(auswahl.filter((id) => id !== z.id));
-               } 
-             }}
-           />
-        </td>
-                 <td>
-                  <input
-                   type="checkbox"
-                   checked={auswahl.includes(z.id)}
-                   onChange={(e) => {
-                    if (e.target.checked) {
-                     setAuswahl([...auswahl, z.id]);
-                    } else {
-                      setAuswahl(auswahl.filter((id) => id !== z.id));
-                    }
-                  }}
-                />
-              </td>
-                  <td>{formatZeit(z.startzeit).split(",")[0]}</td>
-                  <td><strong>{z.fahrzeug}</strong></td>
-                  <td>{z.mitarbeiter}</td>
-                  <td>{z.beifahrer || "-"}</td>
-                  <td>{formatZeit(z.startzeit)}</td>
-                  <td>{formatZeit(z.endzeit)}</td>
-                  <td>{dauerText(z.startzeit, z.endzeit)}</td>
+  {gefilterteZeiten.map((z) => (
+    <tr key={z.id}>
+      <td>
+        <input
+          type="checkbox"
+          checked={auswahl.includes(z.id)}
+          onChange={(e) => {
+            if (e.target.checked) {
+              setAuswahl([...auswahl, z.id]);
+            } else {
+              setAuswahl(auswahl.filter((id) => id !== z.id));
+            }
+          }}
+        />
+      </td>
 
-                  <td>
-                    {z.latitude && z.longitude ? (
-                      <a
-                        href={`https://www.google.com/maps?q=${z.latitude},${z.longitude}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Karte öffnen
-                      </a>
-                    ) : (
-                      <span className="muted">GPS deaktiviert</span>
-                    )}
-                  </td>
+      <td>{formatZeit(z.startzeit).split(",")[0]}</td>
+      <td><strong>{z.fahrzeug}</strong></td>
+      <td>{z.mitarbeiter}</td>
+      <td>{z.beifahrer || "-"}</td>
+      <td>{formatZeit(z.startzeit)}</td>
+      <td>{formatZeit(z.endzeit)}</td>
+      <td>{dauerText(z.startzeit, z.endzeit)}</td>
 
-                  <td>
-                    <span className={z.status === "eingestempelt" ? "badge green" : "badge red"}>
-                      {z.status === "eingestempelt" ? "Abgeholt" : "Abgegeben"}
-                    </span>
-                  </td>
+      <td>
+        {z.latitude && z.longitude ? (
+          <a
+            href={`https://www.google.com/maps?q=${z.latitude},${z.longitude}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Karte öffnen
+          </a>
+        ) : (
+          <span className="muted">GPS deaktiviert</span>
+        )}
+      </td>
 
-                  <td>
-                  </table>
+      <td>
+        <span className={z.status === "eingestempelt" ? "badge green" : "badge red"}>
+          {z.status === "eingestempelt" ? "Abgeholt" : "Abgegeben"}
+        </span>
+      </td>
 
-                  <button className="delete" onClick={mehrereLoeschen}>
-                    Ausgewählte löschen
-                  </button>
+      <td>
+        <button className="delete" onClick={() => eintragLoeschen(z.id)}>
+          Löschen
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
+</table>
+
+<button className="delete" onClick={mehrereLoeschen}>
+  Ausgewählte löschen
+</button>
                   </td>
                 </tr>
               ))}
