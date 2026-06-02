@@ -625,88 +625,66 @@ async function login() {
   </button>
 
   {zeigeHistorie && (
-        <div className="tableWrap">
-          <table>
-            <thead>
-              <tr>
-                <th></th>
-                <th>Datum</th>
-                <th>Fahrzeug</th>
-                <th>Mitarbeiter</th>
-                <th>Beifahrer</th>
-                <th>Start</th>
-                <th>Ende</th>
-                <th>Dauer</th>
-                <th>GPS</th>
-                <th>Status</th>
-                <th>Aktion</th>
-              </tr>
-            </thead>
+    <div className="tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Datum</th>
+            <th>Fahrzeug</th>
+            <th>Mitarbeiter</th>
+            <th>Beifahrer</th>
+            <th>Start</th>
+            <th>Ende</th>
+            <th>Dauer</th>
+            <th>GPS</th>
+            <th>Status</th>
+            <th>Aktion</th>
+          </tr>
+        </thead>
 
-            <tbody>
-  {gefilterteZeiten.map((z) => (
-    <tr key={z.id}>
-      <td>
-        <input
-          type="checkbox"
-          checked={auswahl.includes(z.id)}
-          onChange={(e) => {
-            if (e.target.checked) {
-              setAuswahl([...auswahl, z.id]);
-            } else {
-              setAuswahl(auswahl.filter((id) => id !== z.id));
-            }
-          }}
-        />
-      </td>
+        <tbody>
+          {gefilterteZeiten.map((z) => (
+            <tr key={z.id}>
+              <td>{formatZeit(z.startzeit).split(",")[0]}</td>
+              <td><strong>{z.fahrzeug}</strong></td>
+              <td>{z.mitarbeiter}</td>
+              <td>{z.beifahrer || "-"}</td>
+              <td>{formatZeit(z.startzeit)}</td>
+              <td>{formatZeit(z.endzeit)}</td>
+              <td>{dauerText(z.startzeit, z.endzeit)}</td>
 
-      <td>{formatZeit(z.startzeit).split(",")[0]}</td>
-      <td><strong>{z.fahrzeug}</strong></td>
-      <td>{z.mitarbeiter}</td>
-      <td>{z.beifahrer || "-"}</td>
-      <td>{formatZeit(z.startzeit)}</td>
-      <td>{formatZeit(z.endzeit)}</td>
-      <td>{dauerText(z.startzeit, z.endzeit)}</td>
+              <td>
+                {z.latitude && z.longitude ? (
+                  <a
+                    href={`https://www.google.com/maps?q=${z.latitude},${z.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Karte öffnen
+                  </a>
+                ) : (
+                  <span className="muted">GPS deaktiviert</span>
+                )}
+              </td>
 
-      <td>
-        {z.latitude && z.longitude ? (
-          <a
-            href={`https://www.google.com/maps?q=${z.latitude},${z.longitude}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Karte öffnen
-          </a>
-        ) : (
-          <span className="muted">GPS deaktiviert</span>
-        )}
-      </td>
+              <td>
+                <span className={z.status === "eingestempelt" ? "badge green" : "badge red"}>
+                  {z.status === "eingestempelt" ? "Abgeholt" : "Abgegeben"}
+                </span>
+              </td>
 
-      <td>
-        <span className={z.status === "eingestempelt" ? "badge green" : "badge red"}>
-          {z.status === "eingestempelt" ? "Abgeholt" : "Abgegeben"}
-        </span>
-      </td>
-
-      <td>
-        <button className="delete" onClick={() => eintragLoeschen(z.id)}>
-          Löschen
-        </button>
-      </td>
-    </tr>
-  ))}
-</tbody>
-</table>
-
-<button className="delete" onClick={mehrereLoeschen}>
-  Ausgewählte löschen
-</button>
-  </div>
-)}
-</section>  
-
-        <section className="box">
-          <button className="toggleTitle" onClick={() => setZeigeKarte(!zeigeKarte)}>
+              <td>
+                <button className="delete" onClick={() => eintragLoeschen(z.id)}>
+                  Löschen
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</section>
             {zeigeKarte ? "▼" : "▶"} Live-Karte GPS
           </button>
 
