@@ -701,12 +701,12 @@ async function login() {
 <button className="delete" onClick={mehrereLoeschen}>
   Ausgewählte löschen
 </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          
-         </table><button className="delete" onClick={mehrereLoeschen}>
+  </div>
+)}
+</section>  
+  
+         </table>
+         <button className="delete" onClick={mehrereLoeschen}>
            Ausgewählte löschen
            </button>
         </div>
