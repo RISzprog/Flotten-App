@@ -705,9 +705,6 @@ async function login() {
 )}
 </section>  
 
-        </div>
-       )}
-       </section>
         <section className="box">
           <button className="toggleTitle" onClick={() => setZeigeKarte(!zeigeKarte)}>
             {zeigeKarte ? "▼" : "▶"} Live-Karte GPS
