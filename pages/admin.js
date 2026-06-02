@@ -730,7 +730,6 @@ async function login() {
               />
 
               <LiveMap
-                key={mapKey}
                 zeiten={aktiveZeiten.filter((z) =>
                   String(z.fahrzeug || "")
                     .toLowerCase()
@@ -1236,7 +1235,7 @@ async function login() {
             grid-template-columns: 1fr;
           }
         }
-      {`}</style>
+        }</style>
     </div>
   );
 }
