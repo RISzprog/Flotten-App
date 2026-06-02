@@ -701,17 +701,19 @@ async function login() {
                   </td>
 
                   <td>
-                    <button className="delete" onClick={() => eintragLoeschen(z.id)}>
-                      Löschen
-                    </button>
+                  </table>
+
+                  <button className="delete" onClick={mehrereLoeschen}>
+                    Ausgewählte löschen
+                  </button>
                   </td>
                 </tr>
               ))}
             </tbody>
-          <button className="delete" onClick={mehrereLoeschen}>
+          
+         </table><button className="delete" onClick={mehrereLoeschen}>
            Ausgewählte löschen
            </button>
-         </table>
         </div>
        )}
        </section>
