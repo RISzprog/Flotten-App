@@ -27,6 +27,7 @@ export default function Home() {
   const [beifahrer, setBeifahrer] = useState("");
 
   const [meldung, setMeldung] = useState("nicht abgeholt");
+  const [buttonFlash, setButtonFlash] = useState("");
   const [gps, setGps] = useState(null);
 
   useEffect(() => {
