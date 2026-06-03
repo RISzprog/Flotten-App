@@ -616,7 +616,9 @@ async function login() {
             Nur aktive
           </label>
         </div>
-<section className="box">
+dzeit)}</td>
+
+         <section className="box">
   <button
     className="toggleTitle"
     onClick={() => setZeigeHistorie(!zeigeHistorie)}
@@ -694,25 +696,25 @@ async function login() {
     {zeigeKarte ? "▼" : "▶"} Live-Karte GPS
   </button>
 
-          {zeigeKarte && (
-            <>
-              <input
-                className="mapSearch"
-                placeholder="Fahrzeug auf Karte suchen..."
-                value={kartenSuche}
-                onChange={(e) => setKartenSuche(e.target.value)}
-              />
+  {zeigeKarte && (
+    <>
+      <input
+        className="mapSearch"
+        placeholder="Fahrzeug auf Karte suchen..."
+        value={kartenSuche}
+        onChange={(e) => setKartenSuche(e.target.value)}
+      />
 
-              <LiveMap
-                zeiten={aktiveZeiten.filter((z) =>
-                  String(z.fahrzeug || "")
-                    .toLowerCase()
-                    .includes(kartenSuche.toLowerCase())
-                )}
-              />
-            </>
-          )}
-        </section>
+      <LiveMap
+        zeiten={aktiveZeiten.filter((z) =>
+          String(z.fahrzeug || "")
+            .toLowerCase()
+            .includes(kartenSuche.toLowerCase())
+        )}
+      />
+    </>
+  )}
+</section>
 
         <section className="box">
           <button
