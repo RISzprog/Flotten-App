@@ -290,8 +290,8 @@ if (mitarbeiterAktiv) {
             </button>
 
             <button
-              className={`red ${meldung.includes("Abgegeben") ? "btnAktiv" : ""}`}
-              onClick={abgegeben}
+              className={`red ${meldung.includes("Abgeben") ? "btnAktiv" : ""}`}
+              onClick={abgeben}
             >
               Abgeben
             </button>
