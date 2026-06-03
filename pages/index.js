@@ -441,13 +441,14 @@ if (mitarbeiterAktiv) {
         }
 
         .status {
-          margin-top: 6px;
-          background: rgba(255, 255, 255, 0.18);
-          border-radius: 12px;
-          padding: 12px 16px;
-          border: 1px solid rgba(255, 255, 255, 0.24);
-          font-size: 16px;
-          font-weight: bold;
+           margin-top: 10px;
+           background: rgba(255, 255, 255, 0.18);
+           border-radius: 12px;
+           padding: 16px 20px;
+           border: 1px solid rgba(255, 255, 255, 0.24);
+           font-size: 24px;
+           font-weight: 900;
+           text-align: center;
         }
 
         .thanks {
