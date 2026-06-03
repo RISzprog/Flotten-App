@@ -281,12 +281,7 @@ if (mitarbeiterAktiv) {
   value={beifahrer}
   onChange={(e) => setBeifahrer(e.target.value)}
 />
-
-            <button
-              className={meldung.includes("Abgeholt") ? "green btnInaktiv" : "green btnAktiv"}
-              onClick={abholen}
-            >
-              Abholen
+    
             <button
               className={`green ${meldung.includes("Abgeholt") ? "btnAktiv" : ""}`}
               onClick={abholen}
@@ -296,7 +291,7 @@ if (mitarbeiterAktiv) {
 
             <button
               className={`red ${meldung.includes("Abgegeben") ? "btnAktiv" : ""}`}
-              onClick={abgeben}
+              onClick={abgegeben}
             >
               Abgegeben
             </button>
