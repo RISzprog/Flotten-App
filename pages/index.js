@@ -282,13 +282,27 @@ if (mitarbeiterAktiv) {
   onChange={(e) => setBeifahrer(e.target.value)}
 />
     
-          <button className="green" onClick={abholen}>
-             Abholen
+          <button
+            className={`green ${buttonFlash === "abholen" ? "flash" : ""}`}
+            onClick={() => {
+             setButtonFlash("abholen");
+             setTimeout(() => setButtonFlash(""), 700);
+             abholen();
+          }}
+          >
+            Abholen
           </button>
 
-          <button className="red" onClick={abgeben}>
-             Abgeben
-          </button>
+  <button
+  className={`red ${buttonFlash === "abgeben" ? "flash" : ""}`}
+  onClick={() => {
+    setButtonFlash("abgeben");
+    setTimeout(() => setButtonFlash(""), 700);
+    abgeben();
+  }}
+>
+  Abgeben
+</button>
 
             <div className="status">Status: {meldung}</div>
           </section>
@@ -490,7 +504,11 @@ if (mitarbeiterAktiv) {
             display: none;
            }
            }
-          
+
+          .flash {
+             box-shadow: 0 0 30px rgba(255,255,255,1);
+             transform: scale(1.03);
+           }
       `}</style> 
     </div>
   );
