@@ -293,7 +293,7 @@ if (mitarbeiterAktiv) {
               className={`red ${meldung.includes("Abgegeben") ? "btnAktiv" : ""}`}
               onClick={abgegeben}
             >
-              Abgegeben
+              Abgeben
             </button>
 
             <div className="status">Status: {meldung}</div>
