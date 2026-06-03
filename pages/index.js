@@ -494,14 +494,19 @@ if (mitarbeiterAktiv) {
             display: none;
            }
            }
+     
            .btnInaktiv {
                opacity: 0.35;
-               filter: grayscale(50%);
-           }
+               filter: grayscale(80%);
+               box-shadow: none;
+            }
 
-           .btnAktiv {
-               box-shadow: 0 0 20px rgba(255,255,255,0.8);
-           }
+              .btnAktiv {
+               opacity: 1;
+               filter: none;
+               box-shadow: 0 0 18px rgba(255,255,255,0.9);
+            }
+            
       `}</style> 
     </div>
   );
