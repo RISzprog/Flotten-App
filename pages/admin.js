@@ -2,13 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { createClient } from "@supabase/supabase-js";
 
-const LiveMap = dynamic(() => import("../components/LiveMap"), {
-  ssr: false
-});
+const LiveMap = dynamic(() => import("../components/LiveMap"), { ssr: false });
 
 const supabase = createClient(
   "https://rbhbijcxbemebynfrpiz.supabase.co",
-  "sb_publishable_URHTzamjcI6_j1dt0uTTlQ_GezlUHTw"
+  "sb_publishable_URHTzamjcI6_j1dt0uTTlQ_GezlUHTw",
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  }
 );
 
 function formatZeit(value) {
@@ -18,28 +23,17 @@ function formatZeit(value) {
     month: "2-digit",
     year: "numeric",
     hour: "2-digit",
-    minute: "2-digit"
+    minute: "2-digit",
   });
 }
 
-function formatDatum(value) {
-  if (!value) return "";
-  return new Date(value).toISOString().slice(0, 10);
-}
-
-function dauerMinuten(start, ende) {
-  if (!start || !ende) return 0;
-  return Math.floor((new Date(ende) - new Date(start)) / 60000);
-}
-
 function dauerText(start, ende) {
-  const minuten = dauerMinuten(start, ende);
-  if (!minuten) return "-";
-  return `${Math.floor(minuten / 60)}h ${minuten % 60}min`;
-}
-
-function minutenZuText(minuten) {
-  return `${Math.floor(minuten / 60)}h ${minuten % 60}min`;
+  if (!start) return "-";
+  const endeZeit = ende ? new Date(ende) : new Date();
+  const diff = Math.max(0, Math.floor((endeZeit - new Date(start)) / 60000));
+  const h = Math.floor(diff / 60);
+  const m = diff % 60;
+  return `${h}h ${m}min`;
 }
 
 export default function Admin() {
@@ -47,92 +41,85 @@ export default function Admin() {
   const [rolle, setRolle] = useState("");
   const [email, setEmail] = useState("");
   const [passwort, setPasswort] = useState("");
-
-  const [auswahl, setAuswahl] = useState([]);
+  const [meldung, setMeldung] = useState("");
 
   const [zeiten, setZeiten] = useState([]);
-  const [mapKey, setMapKey] = useState(0);
   const [fahrzeuge, setFahrzeuge] = useState([]);
   const [mitarbeiter, setMitarbeiter] = useState([]);
+  const [auswahl, setAuswahl] = useState([]);
 
-  const [meldung, setMeldung] = useState("");
   const [suche, setSuche] = useState("");
   const [fahrzeugFilter, setFahrzeugFilter] = useState("");
   const [datumFilter, setDatumFilter] = useState("");
   const [nurAktive, setNurAktive] = useState(false);
   const [kartenSuche, setKartenSuche] = useState("");
 
+  const [zeigeHistorie, setZeigeHistorie] = useState(true);
+  const [zeigeKarte, setZeigeKarte] = useState(false);
+  const [zeigeMitarbeiter, setZeigeMitarbeiter] = useState(false);
+  const [zeigeFahrzeuge, setZeigeFahrzeuge] = useState(false);
+
+  const [neuerVorname, setNeuerVorname] = useState("");
+  const [neuerNachname, setNeuerNachname] = useState("");
   const [neuesFahrzeug, setNeuesFahrzeug] = useState("");
   const [neuesKennzeichen, setNeuesKennzeichen] = useState("");
   const [neueKategorie, setNeueKategorie] = useState("PKW");
 
-  const [neuerVorname, setNeuerVorname] = useState("");
-  const [neuerNachname, setNeuerNachname] = useState("");
-
-  const [qrFahrzeug, setQrFahrzeug] = useState(null);
-
-  const [zeigeKarte, setZeigeKarte] = useState(false);
-  const [zeigeMitarbeiter, setZeigeMitarbeiter] = useState(false);
-  const [zeigeFahrzeuge, setZeigeFahrzeuge] = useState(false);
-  const [zeigeHistorie, setZeigeHistorie] = useState(true);
-
-useEffect(() => {
-  supabase.auth.getSession().then(({ data }) => {
-    setSession(data.session);
-
-    if (data.session) {
-      ladeRolle(data.session.user.email);
-      allesLaden();
-    }
-  });
-
-  const { data: listener } = supabase.auth.onAuthStateChange(
-    (_event, newSession) => {
-      setSession(newSession);
-
-      if (newSession) {
-        ladeRolle(newSession.user.email);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      if (data.session) {
+        ladeRolle(data.session.user.email);
         allesLaden();
       }
-    }
-  );
+    });
 
-  const channel = supabase
-  .channel("live-zeiten")
-  .on(
-    "postgres_changes",
-    {
-      event: "*",
-      schema: "public",
-      table: "zeiten"
-    },
-    () => {
-      allesLaden();
-    }
-  )
-  .subscribe();
- return () => {
-  listener.subscription.unsubscribe();
-  supabase.removeChannel(channel);
-};
-}, []);
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, newSession) => {
+        setSession(newSession);
+        if (newSession) {
+          ladeRolle(newSession.user.email);
+          allesLaden();
+        }
+      }
+    );
 
-async function ladeRolle(email) {
-  const { data } = await supabase
-    .from("user_roles")
-    .select("rolle")
-    .eq("email", email)
-    .single();
+    const channel = supabase
+      .channel("admin-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "zeiten" },
+        () => laden()
+      )
+      .subscribe();
 
-  if (data) setRolle(data.rolle);
-}
+    const interval = setInterval(() => {
+      laden();
+    }, 5000);
 
-async function login() {
+    return () => {
+      listener.subscription.unsubscribe();
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
+  }, []);
+
+  async function ladeRolle(userEmail) {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("rolle")
+      .eq("email", userEmail)
+      .single();
+
+    if (data) setRolle(data.rolle);
+  }
+
+  async function login() {
     setMeldung("");
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
-      password: passwort
+      password: passwort,
     });
 
     if (error) setMeldung("Login fehlgeschlagen");
@@ -141,21 +128,14 @@ async function login() {
   async function logout() {
     await supabase.auth.signOut();
     setSession(null);
+    setRolle("");
   }
 
   async function allesLaden() {
-   await laden();
-   await fahrzeugeLaden();
-   await mitarbeiterLaden();
+    await laden();
+    await fahrzeugeLaden();
+    await mitarbeiterLaden();
   }
-
-   useEffect(() => {
-   const interval = setInterval(() => {
-    laden();
-  }, 5000);
-
-  return () => clearInterval(interval);
-  }, []);
 
   async function laden() {
     const { data, error } = await supabase
@@ -163,9 +143,7 @@ async function login() {
       .select("*")
       .order("startzeit", { ascending: false });
 
-  if (!error) {
-   setZeiten(data || []);
-   setMapKey((k) => k + 1);
+    if (!error) setZeiten(data || []);
   }
 
   async function fahrzeugeLaden() {
@@ -186,134 +164,28 @@ async function login() {
     if (!error) setMitarbeiter(data || []);
   }
 
-  function fahrzeugLink(f) {
-    const basis = typeof window !== "undefined" ? window.location.origin : "";
-    const code = f.kennzeichen || f.name;
-    return `${basis}/?fahrzeug=${encodeURIComponent(code)}`;
-  }
+  async function eintragLoeschen(id) {
+    const ok = confirm("Fahrt wirklich löschen?");
+    if (!ok) return;
 
-  function qrBildUrl(f) {
-    return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
-      fahrzeugLink(f)
-    )}`;
-  }
-
-  function csvExportieren() {
-    const kopf = [
-      "Datum",
-      "Fahrzeug",
-      "Mitarbeiter",
-      "Beifahrer",
-      "Start",
-      "Ende",
-      "Dauer",
-      "GPS",
-      "Status"
-    ];
-
-    const zeilen = gefilterteZeiten.map((z) => [
-      formatZeit(z.startzeit).split(",")[0],
-      z.fahrzeug || "",
-      z.mitarbeiter || "",
-      z.beifahrer || "",
-      formatZeit(z.startzeit),
-      formatZeit(z.endzeit),
-      dauerText(z.startzeit, z.endzeit),
-      z.latitude && z.longitude
-        ? `https://www.google.com/maps?q=${z.latitude},${z.longitude}`
-        : "GPS deaktiviert",
-      z.status === "eingestempelt" ? "Abgeholt" : "Abgegeben"
-    ]);
-
-    const csv =
-      "\uFEFF" +
-      [kopf, ...zeilen]
-        .map((reihe) =>
-          reihe.map((feld) => `"${String(feld).replaceAll('"', '""')}"`).join(";")
-        )
-        .join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `RIS_Flotten_Export_${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-
-    URL.revokeObjectURL(url);
-  }
-
-  async function fahrzeugHinzufuegen() {
-    if (!neuesFahrzeug.trim()) {
-      setMeldung("Bitte Fahrzeugname eingeben");
-      return;
-    }
-
-    const { error } = await supabase.from("fahrzeuge").insert([
-      {
-        name: neuesFahrzeug.trim(),
-        kennzeichen: neuesKennzeichen.trim(),
-        kategorie: neueKategorie,
-        aktiv: true
-      }
-    ]);
-
-    if (error) {
-      setMeldung("Fehler beim Fahrzeug hinzufügen");
-      return;
-    }
-
-    setNeuesFahrzeug("");
-    setNeuesKennzeichen("");
-    setNeueKategorie("PKW");
-    setMeldung("Fahrzeug hinzugefügt");
-    fahrzeugeLaden();
-  }
-
-  async function fahrzeugBearbeiten(f) {
-    const neuerName = window.prompt("Fahrzeugname:", f.name);
-    if (!neuerName) return;
-
-    const neuesKennz = window.prompt("Kennzeichen:", f.kennzeichen || "");
-    const neueKat = window.prompt("Kategorie: PKW, Transporter oder Anhänger", f.kategorie || "PKW");
-
-    await supabase
-      .from("fahrzeuge")
-      .update({
-        name: neuerName.trim(),
-        kennzeichen: neuesKennz ? neuesKennz.trim() : "",
-        kategorie: neueKat || "PKW"
-      })
-      .eq("id", f.id);
-
-    fahrzeugeLaden();
-  }
-
-  async function fahrzeugAktivAendern(id, aktiv) {
-    await supabase.from("fahrzeuge").update({ aktiv: !aktiv }).eq("id", id);
-    fahrzeugeLaden();
+    await supabase.from("zeiten").delete().eq("id", id);
+    setAuswahl([]);
+    laden();
   }
 
   async function mehrereLoeschen() {
-  if (auswahl.length === 0) {
-    alert("Bitte Fahrten auswählen");
-    return;
+    if (auswahl.length === 0) {
+      alert("Bitte Fahrten auswählen");
+      return;
+    }
+
+    const ok = confirm("Ausgewählte Fahrten wirklich löschen?");
+    if (!ok) return;
+
+    await supabase.from("zeiten").delete().in("id", auswahl);
+    setAuswahl([]);
+    laden();
   }
-
-  const ok = confirm("Ausgewählte Fahrten löschen?");
-
-  if (!ok) return;
-
-  await supabase
-    .from("zeiten")
-    .delete()
-    .in("id", auswahl);
-
-  setAuswahl([]);
-
-  allesLaden();
-}
 
   async function mitarbeiterHinzufuegen() {
     if (!neuerVorname.trim() || !neuerNachname.trim()) {
@@ -321,34 +193,22 @@ async function login() {
       return;
     }
 
-    await supabase.from("mitarbeiter").insert([
-      {
-        vorname: neuerVorname.trim(),
-        nachname: neuerNachname.trim(),
-        aktiv: true
-      }
-    ]);
+    await supabase.from("mitarbeiter").insert({
+      vorname: neuerVorname.trim(),
+      nachname: neuerNachname.trim(),
+      aktiv: true,
+    });
 
     setNeuerVorname("");
     setNeuerNachname("");
     mitarbeiterLaden();
   }
 
-  async function mitarbeiterBearbeiten(m) {
-    const vorname = window.prompt("Vorname:", m.vorname);
-    if (!vorname) return;
+  async function mitarbeiterLoeschen(id) {
+    const ok = confirm("Mitarbeiter wirklich löschen?");
+    if (!ok) return;
 
-    const nachname = window.prompt("Nachname:", m.nachname);
-    if (!nachname) return;
-
-    await supabase
-      .from("mitarbeiter")
-      .update({
-        vorname: vorname.trim(),
-        nachname: nachname.trim()
-      })
-      .eq("id", m.id);
-
+    await supabase.from("mitarbeiter").delete().eq("id", id);
     mitarbeiterLaden();
   }
 
@@ -357,52 +217,71 @@ async function login() {
     mitarbeiterLaden();
   }
 
-  async function mitarbeiterLoeschen(id) {
-    if (!window.confirm("Mitarbeiter wirklich löschen?")) return;
-    await supabase.from("mitarbeiter").delete().eq("id", id);
-    mitarbeiterLaden();
-  }
+  async function fahrzeugHinzufuegen() {
+    if (!neuesFahrzeug.trim()) {
+      setMeldung("Bitte Fahrzeugname eingeben");
+      return;
+    }
 
-  async function eintragLoeschen(id) {
-    if (!window.confirm("Diesen Eintrag löschen?")) return;
-    await supabase.from("zeiten").delete().eq("id", id);
-    laden();
-  }
-
-  const fahrzeugNamen = useMemo(() => {
-    return fahrzeuge.map((f) => f.name).filter(Boolean).sort();
-  }, [fahrzeuge]);
-
-  const gefilterteZeiten = useMemo(() => {
-    return zeiten.filter((z) => {
-      if (fahrzeugFilter && !String(z.fahrzeug || "").includes(fahrzeugFilter)) return false;
-      if (datumFilter && formatDatum(z.startzeit) !== datumFilter) return false;
-      if (nurAktive && z.status !== "eingestempelt") return false;
-
-      if (suche) {
-        const text = `${z.mitarbeiter || ""} ${z.beifahrer || ""} ${z.fahrzeug || ""}`.toLowerCase();
-        if (!text.includes(suche.toLowerCase())) return false;
-      }
-
-      return true;
+    await supabase.from("fahrzeuge").insert({
+      name: neuesFahrzeug.trim(),
+      kennzeichen: neuesKennzeichen.trim(),
+      kategorie: neueKategorie,
+      aktiv: true,
     });
-  }, [zeiten, fahrzeugFilter, datumFilter, nurAktive, suche]);
 
-  const heute = new Date().toISOString().slice(0, 10);
+    setNeuesFahrzeug("");
+    setNeuesKennzeichen("");
+    setNeueKategorie("PKW");
+    fahrzeugeLaden();
+  }
 
-  const startWoche = new Date();
-  startWoche.setDate(startWoche.getDate() - startWoche.getDay() + 1);
-  const wochenStartText = startWoche.toISOString().slice(0, 10);
+  async function fahrzeugLoeschen(id) {
+    const ok = confirm("Fahrzeug wirklich löschen?");
+    if (!ok) return;
 
-  const minutenHeute = zeiten
-    .filter((z) => formatDatum(z.startzeit) === heute)
-    .reduce((summe, z) => summe + dauerMinuten(z.startzeit, z.endzeit), 0);
+    await supabase.from("fahrzeuge").delete().eq("id", id);
+    fahrzeugeLaden();
+  }
 
-  const minutenWoche = zeiten
-    .filter((z) => formatDatum(z.startzeit) >= wochenStartText)
-    .reduce((summe, z) => summe + dauerMinuten(z.startzeit, z.endzeit), 0);
+  async function fahrzeugAktivAendern(id, aktiv) {
+    await supabase.from("fahrzeuge").update({ aktiv: !aktiv }).eq("id", id);
+    fahrzeugeLaden();
+  }
 
   const aktiveZeiten = zeiten.filter((z) => z.status === "eingestempelt");
+
+  const fahrzeugNamen = useMemo(() => {
+    return [...new Set(zeiten.map((z) => z.fahrzeug).filter(Boolean))];
+  }, [zeiten]);
+
+  const gefilterteZeiten = useMemo(() => {
+    const text = suche.toLowerCase();
+
+    return zeiten.filter((z) => {
+      const passtSuche =
+        !text ||
+        String(z.mitarbeiter || "").toLowerCase().includes(text) ||
+        String(z.beifahrer || "").toLowerCase().includes(text) ||
+        String(z.fahrzeug || "").toLowerCase().includes(text);
+
+      const passtFahrzeug = !fahrzeugFilter || z.fahrzeug === fahrzeugFilter;
+
+      const passtDatum =
+        !datumFilter ||
+        new Date(z.startzeit).toISOString().slice(0, 10) === datumFilter;
+
+      const passtAktiv = !nurAktive || z.status === "eingestempelt";
+
+      return passtSuche && passtFahrzeug && passtDatum && passtAktiv;
+    });
+  }, [zeiten, suche, fahrzeugFilter, datumFilter, nurAktive]);
+
+  const gesamtHeute = zeiten.filter((z) => {
+    if (!z.startzeit) return false;
+    const heute = new Date().toISOString().slice(0, 10);
+    return new Date(z.startzeit).toISOString().slice(0, 10) === heute;
+  });
 
   if (!session) {
     return (
@@ -426,7 +305,6 @@ async function login() {
           />
 
           <button onClick={login}>Einloggen</button>
-
           {meldung && <p>{meldung}</p>}
         </div>
 
@@ -434,7 +312,7 @@ async function login() {
           .page {
             min-height: 100vh;
             font-family: Arial, sans-serif;
-            background: linear-gradient(90deg, #2f5fb3 0%, #4f7fd8 42%, #f3a24d 72%, #ef7d22 100%);
+            background: linear-gradient(90deg, #2f5fb3, #f97316);
           }
 
           .loginPage {
@@ -445,45 +323,21 @@ async function login() {
           }
 
           .loginBox {
-            background: rgba(255, 255, 255, 0.94);
+            background: white;
             padding: 28px;
             border-radius: 24px;
             width: 360px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
             text-align: center;
-            color: #0f2f6e;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
           }
 
           .logo {
-            margin: 0 auto 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 86px;
-            height: 50px;
-            border-radius: 14px;
-            background: white;
-            color: #0f2f6e;
             font-size: 30px;
             font-weight: 900;
-            border-bottom: 5px solid #f97316;
+            color: #0f2f6e;
+            margin-bottom: 12px;
           }
 
-          .box {
-            padding: 10px !important;
-            margin-bottom: 10px !important;
-            border-radius: 18px !important;
-          }
-
-           .toggleTitle {
-            font-size: 18px !important;
-            padding: 2px 0 !important;
-          }
-
-           .statCard {
-           padding: 10px !important;
-           min-height: 80px !important;
-          }
           input {
             width: 100%;
             padding: 14px;
@@ -509,83 +363,55 @@ async function login() {
       </div>
     );
   }
+
   if (session && rolle && rolle !== "admin") {
-  return (
-    <div className="page loginPage">
-      <div className="loginBox">
-        <div className="logo">RIS</div>
-        <h1>Kein Zugriff</h1>
-        <p>Du bist nicht als Admin freigeschaltet.</p>
-        <button onClick={logout}>Logout</button>
+    return (
+      <div className="page loginPage">
+        <div className="loginBox">
+          <div className="logo">RIS</div>
+          <h1>Kein Zugriff</h1>
+          <p>Du bist nicht als Admin freigeschaltet.</p>
+          <button onClick={logout}>Logout</button>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   return (
     <div className="page">
       <div className="wrap">
         <header>
           <div className="logo">RIS</div>
-          <h1>RIS Admin</h1>
+          <div>
+            <h1>RIS Admin</h1>
+            <p>{session.user.email}</p>
+          </div>
+          <button className="logout" onClick={logout}>
+            Logout
+          </button>
         </header>
 
-        <div className="topActions">
-          <button className="refresh" onClick={allesLaden}>Aktualisieren</button>
-          <button className="export" onClick={csvExportieren}>CSV Export</button>
-          <button className="logout" onClick={logout}>Logout</button>
-        </div>
-
-        {meldung && <div className="message">{meldung}</div>}
-
-        <div className="dashboardGrid">
-          <div className="dashboardCard">
-            <span>🚗 Fahrzeuge unterwegs</span>
+        <section className="statsGrid">
+          <div className="statCard">
+            <span>Aktive Fahrzeuge</span>
             <strong>{aktiveZeiten.length}</strong>
           </div>
 
-          <div className="dashboardCard">
-            <span>✅ Fahrzeuge verfügbar</span>
-            <strong>
-              {
-                fahrzeuge.filter((f) => {
-                  const unterwegs = aktiveZeiten.some((z) =>
-                    String(z.fahrzeug || "").includes(f.name)
-                  );
-                  return f.aktiv && !unterwegs;
-                }).length
-              }
-            </strong>
+          <div className="statCard">
+            <span>Fahrten heute</span>
+            <strong>{gesamtHeute.length}</strong>
           </div>
 
-          <div className="dashboardCard">
-            <span>👷 Aktive Mitarbeiter</span>
-            <strong>{aktiveZeiten.length}</strong>
-
-            <div className="liveList">
-              {aktiveZeiten.map((z) => (
-                <div key={z.id}>
-                  {z.mitarbeiter} → {z.fahrzeug}
-                </div>
-              ))}
-            </div>
+          <div className="statCard">
+            <span>Fahrzeuge gesamt</span>
+            <strong>{fahrzeuge.length}</strong>
           </div>
 
-          <div className="dashboardCard">
-            <span>⏱️ Stunden heute</span>
-            <strong>{minutenZuText(minutenHeute)}</strong>
+          <div className="statCard">
+            <span>Mitarbeiter gesamt</span>
+            <strong>{mitarbeiter.length}</strong>
           </div>
-
-          <div className="dashboardCard">
-            <span>📆 Stunden Woche</span>
-            <strong>{minutenZuText(minutenWoche)}</strong>
-          </div>
-
-          <div className="dashboardCard">
-            <span>📍 Letzte Abholung</span>
-            <strong>{zeiten.length > 0 ? formatZeit(zeiten[0].startzeit) : "-"}</strong>
-          </div>
-        </div>
+        </section>
 
         <div className="filters">
           <input
@@ -594,10 +420,15 @@ async function login() {
             onChange={(e) => setSuche(e.target.value)}
           />
 
-          <select value={fahrzeugFilter} onChange={(e) => setFahrzeugFilter(e.target.value)}>
+          <select
+            value={fahrzeugFilter}
+            onChange={(e) => setFahrzeugFilter(e.target.value)}
+          >
             <option value="">Alle Fahrzeuge</option>
             {fahrzeugNamen.map((f) => (
-              <option key={f} value={f}>{f}</option>
+              <option key={f} value={f}>
+                {f}
+              </option>
             ))}
           </select>
 
@@ -617,103 +448,139 @@ async function login() {
           </label>
         </div>
 
-         <section className="box">
-  <button
-    className="toggleTitle"
-    onClick={() => setZeigeHistorie(!zeigeHistorie)}
-  >
-    {zeigeHistorie ? "▼" : "▶"} Fahrten / Historie
-  </button>
+        <section className="box">
+          <button
+            className="toggleTitle"
+            onClick={() => setZeigeHistorie(!zeigeHistorie)}
+          >
+            {zeigeHistorie ? "▼" : "▶"} Fahrten / Historie
+          </button>
 
-  {zeigeHistorie && (
-    <div className="tableWrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Datum</th>
-            <th>Fahrzeug</th>
-            <th>Mitarbeiter</th>
-            <th>Beifahrer</th>
-            <th>Start</th>
-            <th>Ende</th>
-            <th>Dauer</th>
-            <th>GPS</th>
-            <th>Status</th>
-            <th>Aktion</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {gefilterteZeiten.map((z) => (
-            <tr key={z.id}>
-              <td>{formatZeit(z.startzeit).split(",")[0]}</td>
-              <td><strong>{z.fahrzeug}</strong></td>
-              <td>{z.mitarbeiter}</td>
-              <td>{z.beifahrer || "-"}</td>
-              <td>{formatZeit(z.startzeit)}</td>
-              <td>{formatZeit(z.endzeit)}</td>
-              <td>{dauerText(z.startzeit, z.endzeit)}</td>
-
-              <td>
-                {z.latitude && z.longitude ? (
-                  <a
-                    href={`https://www.google.com/maps?q=${z.latitude},${z.longitude}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Karte öffnen
-                  </a>
-                ) : (
-                  <span className="muted">GPS deaktiviert</span>
-                )}
-              </td>
-
-              <td>
-                <span className={z.status === "eingestempelt" ? "badge green" : "badge red"}>
-                  {z.status === "eingestempelt" ? "Abgeholt" : "Abgegeben"}
-                </span>
-              </td>
-
-              <td>
-                <button className="delete" onClick={() => eintragLoeschen(z.id)}>
-                  Löschen
+          {zeigeHistorie && (
+            <div className="tableWrap">
+              {auswahl.length > 0 && (
+                <button className="delete bulk" onClick={mehrereLoeschen}>
+                  {auswahl.length} ausgewählte löschen
                 </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )}
-</section>
+              )}
 
-<section className="box">
-  <button
-    className="toggleTitle"
-    onClick={() => setZeigeKarte(!zeigeKarte)}
-  >
-    {zeigeKarte ? "▼" : "▶"} Live-Karte GPS
-  </button>
+              <table>
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>Datum</th>
+                    <th>Fahrzeug</th>
+                    <th>Mitarbeiter</th>
+                    <th>Beifahrer</th>
+                    <th>Start</th>
+                    <th>Ende</th>
+                    <th>Dauer</th>
+                    <th>GPS</th>
+                    <th>Status</th>
+                    <th>Aktion</th>
+                  </tr>
+                </thead>
 
-  {zeigeKarte && (
-    <>
-      <input
-        className="mapSearch"
-        placeholder="Fahrzeug auf Karte suchen..."
-        value={kartenSuche}
-        onChange={(e) => setKartenSuche(e.target.value)}
-      />
+                <tbody>
+                  {gefilterteZeiten.map((z) => (
+                    <tr key={z.id}>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={auswahl.includes(z.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setAuswahl([...auswahl, z.id]);
+                            } else {
+                              setAuswahl(
+                                auswahl.filter((id) => id !== z.id)
+                              );
+                            }
+                          }}
+                        />
+                      </td>
 
-      <LiveMap
-        zeiten={aktiveZeiten.filter((z) =>
-          String(z.fahrzeug || "")
-            .toLowerCase()
-            .includes(kartenSuche.toLowerCase())
-        )}
-      />
-    </>
-  )}
-</section>
+                      <td>{formatZeit(z.startzeit).split(",")[0]}</td>
+                      <td>
+                        <strong>{z.fahrzeug}</strong>
+                      </td>
+                      <td>{z.mitarbeiter}</td>
+                      <td>{z.beifahrer || "-"}</td>
+                      <td>{formatZeit(z.startzeit)}</td>
+                      <td>{formatZeit(z.endzeit)}</td>
+                      <td>{dauerText(z.startzeit, z.endzeit)}</td>
+
+                      <td>
+                        {z.latitude && z.longitude ? (
+                          <a
+                            href={`https://www.google.com/maps?q=${z.latitude},${z.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Karte öffnen
+                          </a>
+                        ) : (
+                          <span className="muted">GPS deaktiviert</span>
+                        )}
+                      </td>
+
+                      <td>
+                        <span
+                          className={
+                            z.status === "eingestempelt"
+                              ? "badge green"
+                              : "badge red"
+                          }
+                        >
+                          {z.status === "eingestempelt"
+                            ? "Abgeholt"
+                            : "Abgegeben"}
+                        </span>
+                      </td>
+
+                      <td>
+                        <button
+                          className="delete"
+                          onClick={() => eintragLoeschen(z.id)}
+                        >
+                          Löschen
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <section className="box">
+          <button
+            className="toggleTitle"
+            onClick={() => setZeigeKarte(!zeigeKarte)}
+          >
+            {zeigeKarte ? "▼" : "▶"} Live-Karte GPS
+          </button>
+
+          {zeigeKarte && (
+            <>
+              <input
+                className="mapSearch"
+                placeholder="Fahrzeug auf Karte suchen..."
+                value={kartenSuche}
+                onChange={(e) => setKartenSuche(e.target.value)}
+              />
+
+              <LiveMap
+                zeiten={aktiveZeiten.filter((z) =>
+                  String(z.fahrzeug || "")
+                    .toLowerCase()
+                    .includes(kartenSuche.toLowerCase())
+                )}
+              />
+            </>
+          )}
+        </section>
 
         <section className="box">
           <button
@@ -731,35 +598,51 @@ async function login() {
                   value={neuerVorname}
                   onChange={(e) => setNeuerVorname(e.target.value)}
                 />
-
                 <input
                   placeholder="Nachname"
                   value={neuerNachname}
                   onChange={(e) => setNeuerNachname(e.target.value)}
                 />
-
-                <button className="add" onClick={mitarbeiterHinzufuegen}>
+                <button onClick={mitarbeiterHinzufuegen}>
                   Mitarbeiter hinzufügen
                 </button>
               </div>
 
-              <div className="gridCards">
-                {mitarbeiter.map((m) => (
-                  <div key={m.id} className={m.aktiv ? "miniCard" : "miniCard inactive"}>
-                    <strong>{m.vorname} {m.nachname}</strong>
-                    <span>{m.aktiv ? "aktiv" : "deaktiviert"}</span>
-
-                    <div className="miniButtons">
-                      <button onClick={() => mitarbeiterBearbeiten(m)}>Bearbeiten</button>
-                      <button onClick={() => mitarbeiterAktivAendern(m.id, m.aktiv)}>
-                        {m.aktiv ? "Deaktivieren" : "Aktivieren"}
-                      </button>
-                      <button className="smallDelete" onClick={() => mitarbeiterLoeschen(m.id)}>
-                        Löschen
-                      </button>
-                    </div>
-                  </div>
-                ))}
+              <div className="tableWrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Status</th>
+                      <th>Aktion</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mitarbeiter.map((m) => (
+                      <tr key={m.id}>
+                        <td>
+                          {m.vorname} {m.nachname}
+                        </td>
+                        <td>{m.aktiv ? "Aktiv" : "Inaktiv"}</td>
+                        <td>
+                          <button
+                            onClick={() =>
+                              mitarbeiterAktivAendern(m.id, m.aktiv)
+                            }
+                          >
+                            {m.aktiv ? "Deaktivieren" : "Aktivieren"}
+                          </button>
+                          <button
+                            className="delete"
+                            onClick={() => mitarbeiterLoeschen(m.id)}
+                          >
+                            Löschen
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </>
           )}
@@ -781,75 +664,76 @@ async function login() {
                   value={neuesFahrzeug}
                   onChange={(e) => setNeuesFahrzeug(e.target.value)}
                 />
-
                 <input
                   placeholder="Kennzeichen"
                   value={neuesKennzeichen}
                   onChange={(e) => setNeuesKennzeichen(e.target.value)}
                 />
-
-                <select value={neueKategorie} onChange={(e) => setNeueKategorie(e.target.value)}>
-                  <option value="PKW">PKW</option>
-                  <option value="Transporter">Transporter</option>
-                  <option value="Anhänger">Anhänger</option>
+                <select
+                  value={neueKategorie}
+                  onChange={(e) => setNeueKategorie(e.target.value)}
+                >
+                  <option>PKW</option>
+                  <option>Transporter</option>
+                  <option>Anhänger</option>
                 </select>
-
-                <button className="add" onClick={fahrzeugHinzufuegen}>
+                <button onClick={fahrzeugHinzufuegen}>
                   Fahrzeug hinzufügen
                 </button>
               </div>
 
-              {["PKW", "Transporter", "Anhänger"].map((kat) => (
-                <div key={kat}>
-                  <h3>{kat}</h3>
+              <div className="tableWrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Fahrzeug</th>
+                      <th>Kennzeichen</th>
+                      <th>Kategorie</th>
+                      <th>Status</th>
+                      <th>QR Link</th>
+                      <th>Aktion</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fahrzeuge.map((f) => {
+                      const fahrzeugName = `${f.name} · ${
+                        f.kennzeichen || ""
+                      }`;
+                      const qrLink = `https://ris-flotten-app.vercel.app/?fahrzeug=${encodeURIComponent(
+                        fahrzeugName
+                      )}`;
 
-                  <div className="gridCards">
-                    {fahrzeuge
-                      .filter((f) => (f.kategorie || "PKW") === kat)
-                      .map((f) => (
-                        <div key={f.id} className={f.aktiv ? "miniCard" : "miniCard inactive"}>
-                          <strong>{f.name}</strong>
-                          <span>{f.kennzeichen || "kein Kennzeichen"}</span>
-
-                          <div className="miniButtons">
-                            <button onClick={() => fahrzeugBearbeiten(f)}>Bearbeiten</button>
-                            <button onClick={() => fahrzeugAktivAendern(f.id, f.aktiv)}>
+                      return (
+                        <tr key={f.id}>
+                          <td>{f.name}</td>
+                          <td>{f.kennzeichen || "-"}</td>
+                          <td>{f.kategorie || "-"}</td>
+                          <td>{f.aktiv ? "Aktiv" : "Inaktiv"}</td>
+                          <td className="qrLink">{qrLink}</td>
+                          <td>
+                            <button
+                              onClick={() =>
+                                fahrzeugAktivAendern(f.id, f.aktiv)
+                              }
+                            >
                               {f.aktiv ? "Deaktivieren" : "Aktivieren"}
                             </button>
-                            <button onClick={() => setQrFahrzeug(f)}>QR anzeigen</button>
-                            <button className="smallDelete" onClick={() => fahrzeugLoeschen(f.id)}>
+                            <button
+                              className="delete"
+                              onClick={() => fahrzeugLoeschen(f.id)}
+                            >
                               Löschen
                             </button>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              ))}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </>
           )}
         </section>
-
-        {qrFahrzeug && (
-          <div className="qrOverlay" onClick={() => setQrFahrzeug(null)}>
-            <div className="qrBox" onClick={(e) => e.stopPropagation()}>
-              <h2>{qrFahrzeug.name}</h2>
-              <p>{qrFahrzeug.kennzeichen}</p>
-
-              <img src={qrBildUrl(qrFahrzeug)} alt="QR Code" />
-
-              <p className="qrLink">{fahrzeugLink(qrFahrzeug)}</p>
-
-              <button className="refresh" onClick={() => window.open(qrBildUrl(qrFahrzeug), "_blank")}>
-                QR öffnen
-              </button>
-
-              <button className="logout" onClick={() => setQrFahrzeug(null)}>
-                Schließen
-              </button>
-            </div>
-          </div>
-        )}
 
         <footer>© RIS 2026</footer>
       </div>
@@ -857,180 +741,117 @@ async function login() {
       <style jsx>{`
         .page {
           min-height: 100vh;
-          padding: 24px;
           font-family: Arial, sans-serif;
-          background: linear-gradient(90deg, #2f5fb3 0%, #4f7fd8 42%, #f3a24d 72%, #ef7d22 100%);
+          background: linear-gradient(90deg, #2f5fb3 0%, #4f7fd8 42%, #f97316 100%);
           color: #0f2f6e;
+          padding: 18px;
+          zoom: 0.92;
         }
 
         .wrap {
-          max-width: 1300px;
+          max-width: 1600px;
           margin: 0 auto;
         }
 
         header {
-          text-align: center;
-          margin-bottom: 24px;
-          color: white;
-        }
-
-        .logo {
-          margin: 0 auto 10px;
           display: flex;
           align-items: center;
-          justify-content: center;
-          width: 86px;
-          height: 50px;
-          border-radius: 14px;
-          background: white;
-          color: #0f2f6e;
-          font-size: 30px;
-          font-weight: 900;
-          border-bottom: 5px solid #f97316;
+          gap: 18px;
+          color: white;
+          margin-bottom: 18px;
         }
 
         h1 {
+          font-size: 34px;
           margin: 0;
-          font-size: 42px;
-          font-weight: 900;
         }
 
-        .topActions {
-          display: flex;
-          gap: 12px;
-          margin-bottom: 18px;
-          flex-wrap: wrap;
-        }
-
-        .refresh,
-        .logout,
-        .export,
-        .add {
-          border: none;
-          padding: 12px 18px;
-          border-radius: 12px;
+        header p {
+          margin: 4px 0 0;
           font-weight: bold;
-          color: white;
         }
 
-        .refresh,
-        .add {
-          background: #0f2f6e;
-        }
-
-        .export {
-          background: #16a34a;
-        }
-
-        .logout,
-        .delete {
-          background: #dc2626;
-        }
-
-        .message {
+        .logo {
           background: white;
-          padding: 10px 14px;
-          border-radius: 10px;
-          font-weight: bold;
-          margin-bottom: 12px;
+          color: #0f2f6e;
+          font-size: 28px;
+          font-weight: 900;
+          padding: 12px 16px;
+          border-radius: 16px;
+        }
+
+        .logout {
+          margin-left: auto;
+          width: auto;
+          background: #ef4444;
         }
 
         .statsGrid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-          gap: 10px;
-        }
-
-        .page {
-          zoom: 0.88;
-        }
-        
-        .dashboardCard {
-          background: rgba(255, 255, 255, 0.94);
-          border-radius: 22px;
-          padding: 22px;
-          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.14);
-          display: flex;
-          flex-direction: column;
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
           gap: 12px;
+          margin-bottom: 16px;
         }
 
-        .dashboardCard span {
+        .statCard {
+          background: rgba(255, 255, 255, 0.95);
+          border-radius: 18px;
+          padding: 14px;
+          min-height: 85px;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.14);
+        }
+
+        .statCard span {
+          display: block;
           color: #64748b;
-          font-size: 15px;
           font-weight: bold;
+          margin-bottom: 8px;
         }
 
-        .dashboardCard strong {
-          font-size: 30px;
-          color: #0f2f6e;
+        .statCard strong {
+          font-size: 34px;
         }
 
-        .liveList {
-          margin-top: 10px;
-          font-size: 13px;
-          color: #0f2f6e;
+        .filters,
+        .formGrid {
           display: grid;
-          gap: 6px;
-        }
-
-        .liveList div {
-          background: #f8fafc;
-          padding: 7px 9px;
-          border-radius: 10px;
-          font-weight: bold;
+          grid-template-columns: 2fr 1.4fr 1.2fr auto;
+          gap: 12px;
+          background: rgba(255, 255, 255, 0.2);
+          padding: 12px;
+          border-radius: 18px;
+          margin-bottom: 16px;
         }
 
         .box {
-          background: rgba(255, 255, 255, 0.94);
-          padding: 18px;
+          background: rgba(255, 255, 255, 0.96);
           border-radius: 20px;
-          margin-bottom: 18px;
+          padding: 14px;
+          margin-bottom: 16px;
           box-shadow: 0 15px 35px rgba(0, 0, 0, 0.14);
         }
 
         .toggleTitle {
           width: 100%;
           background: transparent;
-          color: #0f2f6e;
           border: none;
+          color: #0f2f6e;
           text-align: left;
-          font-size: 16px;
+          font-size: 18px;
           font-weight: 900;
-          padding: 0;
-          margin-bottom: 4px;
+          padding: 4px 0;
+          margin-bottom: 8px;
           box-shadow: none;
         }
 
-        .mapSearch {
+        input,
+        select {
           width: 100%;
           padding: 12px;
           border-radius: 12px;
           border: 1px solid #cbd5e1;
-          font-size: 15px;
-          margin-bottom: 12px;
+          font-size: 16px;
           box-sizing: border-box;
-        }
-
-        .filters {
-          display: grid;
-          grid-template-columns: 1.4fr 1fr 1fr auto;
-          gap: 12px;
-          margin-bottom: 18px;
-          background: rgba(255, 255, 255, 0.22);
-          backdrop-filter: blur(14px);
-          padding: 14px;
-          border-radius: 18px;
-        }
-
-        .filters input,
-        .filters select,
-        .formGrid input,
-        .formGrid select {
-          padding: 12px;
-          border-radius: 12px;
-          border: none;
-          font-size: 15px;
         }
 
         .check {
@@ -1038,17 +859,40 @@ async function login() {
           align-items: center;
           gap: 8px;
           background: white;
-          padding: 10px 12px;
+          padding: 10px 14px;
           border-radius: 12px;
           font-weight: bold;
+          white-space: nowrap;
+        }
+
+        .check input {
+          width: auto;
+        }
+
+        button {
+          border: none;
+          border-radius: 12px;
+          background: #0f2f6e;
+          color: white;
+          padding: 10px 12px;
+          font-size: 15px;
+          font-weight: bold;
+          cursor: pointer;
+        }
+
+        .delete {
+          background: #dc2626;
+        }
+
+        .bulk {
+          margin-bottom: 10px;
+          width: auto;
         }
 
         .tableWrap {
           overflow-x: auto;
-          background: rgba(255, 255, 255, 0.96);
-          border-radius: 20px;
-          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.18);
-          margin-bottom: 22px;
+          background: white;
+          border-radius: 16px;
         }
 
         table {
@@ -1061,90 +905,27 @@ async function login() {
         th {
           background: #0f2f6e;
           color: white;
-          padding: 6px;
+          padding: 8px;
           text-align: left;
         }
 
         td {
           padding: 8px;
           border-bottom: 1px solid #e5e7eb;
+          vertical-align: top;
         }
 
         a {
           color: #0f2f6e;
           font-weight: bold;
-          text-decoration: underline;
-        }
-
-        .formGrid {
-          display: grid;
-          grid-template-columns: 1fr 1fr 1fr auto;
-          gap: 12px;
-          margin-bottom: 16px;
-        }
-
-        .gridCards {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-          gap: 12px;
-          margin-bottom: 18px;
-        }
-
-        .miniCard {
-          background: #f8fafc;
-          border-radius: 16px;
-          padding: 14px;
-          border-left: 6px solid #16a34a;
-        }
-
-        .miniCard.inactive {
-          opacity: 0.55;
-          border-left-color: #dc2626;
-        }
-
-        .miniCard strong {
-          display: block;
-          font-size: 18px;
-        }
-
-        .miniCard span {
-          display: block;
-          color: #64748b;
-          margin-top: 4px;
-          margin-bottom: 10px;
-        }
-
-        .miniButtons {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-        }
-
-        .miniButtons button {
-          border: none;
-          background: #0f2f6e;
-          color: white;
-          padding: 7px 10px;
-          border-radius: 9px;
-          font-weight: bold;
-        }
-
-        .miniButtons .smallDelete {
-          background: #dc2626;
-        }
-
-        .muted {
-          color: #64748b;
-          font-weight: bold;
         }
 
         .badge {
           display: inline-block;
-          color: white;
-          padding: 7px 12px;
+          padding: 8px 12px;
           border-radius: 999px;
+          color: white;
           font-weight: bold;
-          font-size: 14px;
         }
 
         .green {
@@ -1155,40 +936,12 @@ async function login() {
           background: #dc2626;
         }
 
-        .delete {
-          color: white;
-          border: none;
-          padding: 8px 12px;
-          border-radius: 10px;
-          font-weight: bold;
+        .muted {
+          color: #64748b;
         }
 
-        .qrOverlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.65);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 999;
-          padding: 20px;
-        }
-
-        .qrBox {
-          background: white;
-          border-radius: 24px;
-          padding: 26px;
-          text-align: center;
-          max-width: 380px;
-          width: 100%;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
-        }
-
-        .qrBox img {
-          width: 260px;
-          height: 260px;
-          margin: 10px auto;
-          display: block;
+        .mapSearch {
+          margin-bottom: 12px;
         }
 
         .qrLink {
@@ -1199,18 +952,30 @@ async function login() {
 
         footer {
           text-align: center;
-          margin-top: 36px;
-          font-weight: bold;
           color: white;
+          font-weight: bold;
+          margin: 30px 0;
         }
 
         @media (max-width: 900px) {
-          .formGrid,
-          .filters {
+          .filters,
+          .formGrid {
             grid-template-columns: 1fr;
           }
+
+          .page {
+            zoom: 0.86;
+          }
+
+          h1 {
+            font-size: 26px;
+          }
+
+          .toggleTitle {
+            font-size: 16px;
+          }
         }
-       `}</style>
+      `}</style>
     </div>
   );
 }
