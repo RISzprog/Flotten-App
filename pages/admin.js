@@ -616,7 +616,6 @@ async function login() {
             Nur aktive
           </label>
         </div>
-dzeit)}</td>
 
          <section className="box">
   <button
