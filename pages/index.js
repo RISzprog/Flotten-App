@@ -446,7 +446,7 @@ if (mitarbeiterAktiv) {
            border-radius: 12px;
            padding: 16px 20px;
            border: 1px solid rgba(255, 255, 255, 0.24);
-           font-size: 24px;
+           font-size: 28px;
            font-weight: 900;
            text-align: center;
         }
