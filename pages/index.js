@@ -287,13 +287,18 @@ if (mitarbeiterAktiv) {
               onClick={abholen}
             >
               Abholen
+            <button
+              className={`green ${meldung.includes("Abgeholt") ? "btnAktiv" : ""}`}
+              onClick={abholen}
+            >
+              Abholen
             </button>
 
             <button
-             className={meldung.includes("Abgeholt") ? "red btnAktiv" : "red btnInaktiv"}
-             onClick={abgeben}
+              className={`red ${meldung.includes("Abgegeben") ? "btnAktiv" : ""}`}
+              onClick={abgeben}
             >
-             Abgeben
+              Abgegeben
             </button>
 
             <div className="status">Status: {meldung}</div>
@@ -421,15 +426,16 @@ if (mitarbeiterAktiv) {
         }
 
         button {
-          width: 100%;
-          padding: 16px;
-          color: white;
-          border: none;
-          border-radius: 16px;
-          font-size: 22px;
-          font-weight: bold;
-          margin-bottom: 12px;
-          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+           width: auto;
+           min-width: 180px;
+           padding: 16px 24px;
+           color: white;
+           border: none;
+           border-radius: 16px;
+           font-size: 22px;
+           font-weight: bold;
+           margin-bottom: 12px;
+           box-shadow: 0 10px 24px rgba(0,0,0,0.22);
         }
 
         .green {
