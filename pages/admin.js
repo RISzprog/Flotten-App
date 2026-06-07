@@ -335,54 +335,60 @@ export default function Admin() {
         </section>
       )}
 
-        <section className="card">
-          <h2>Live-Karte</h2>
-          <LiveMap zeiten={aktiveZeiten || []} />
-        </section>
+       {bereich === "uebersicht" && (
+       <section className="card">
+        <h2>Live-Karte</h2>
+        <LiveMap zeiten={aktiveZeiten || []} />
+       </section>
+      )}
 
-        <section className="card">
-          <h2>Fahrer-Stundenübersicht</h2>
+   {bereich === "stunden" && (
+<section className="card">
+  <h2>Fahrer-Stundenübersicht</h2>
 
-          <h3>Nach Tag</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Fahrer</th>
-                <th>Tag</th>
-                <th>Stunden</th>
-              </tr>
-            </thead>
-            <tbody>
-              {fahrerStunden.tage.map((e) => (
-                <tr key={`${e.mitarbeiter}-${e.tag}`}>
-                  <td>{e.mitarbeiter}</td>
-                  <td>{e.tag}</td>
-                  <td>{stunden(e.stunden)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+  <h3>Nach Tag</h3>
 
-          <h3>Gesamt im Monat</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Fahrer</th>
-                <th>Monat</th>
-                <th>Stunden</th>
-              </tr>
-            </thead>
-            <tbody>
-              {fahrerStunden.monate.map((e) => (
-                <tr key={`${e.mitarbeiter}-${e.monat}`}>
-                  <td>{e.mitarbeiter}</td>
-                  <td>{e.monat}</td>
-                  <td>{stunden(e.stunden)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
+  <table>
+    <thead>
+      <tr>
+        <th>Fahrer</th>
+        <th>Tag</th>
+        <th>Stunden</th>
+      </tr>
+    </thead>
+    <tbody>
+      {fahrerStunden.tage.map((e) => (
+        <tr key={`${e.mitarbeiter}-${e.tag}`}>
+          <td>{e.mitarbeiter}</td>
+          <td>{e.tag}</td>
+          <td>{stunden(e.stunden)}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+
+  <h3>Gesamt im Monat</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Fahrer</th>
+        <th>Monat</th>
+        <th>Stunden</th>
+      </tr>
+    </thead>
+    <tbody>
+      {fahrerStunden.monate.map((e) => (
+        <tr key={`${e.mitarbeiter}-${e.monat}`}>
+          <td>{e.mitarbeiter}</td>
+          <td>{e.monat}</td>
+          <td>{stunden(e.stunden)}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</section>
+)}
 
         <section className="card">
           <h2>Filter</h2>
@@ -407,7 +413,8 @@ export default function Admin() {
           </div>
         </section>
 
-        <section className="card">
+        {bereich === "historie" && (
+         <section className="card">
           <h2>Fahrten-Historie</h2>
           <table>
             <thead>
@@ -434,7 +441,9 @@ export default function Admin() {
             </tbody>
           </table>
         </section>
+       )}        
 
+        {(bereich === "mitarbeiter" || bereich === "fahrzeuge") && (
         <section className="grid2">
           <div className="card">
             <h2>Mitarbeiter</h2>
@@ -469,7 +478,8 @@ export default function Admin() {
             </table>
           </div>
         </section>
-      </div>
+        )}
+        </div>
 
       <style jsx>{`
         .page {
