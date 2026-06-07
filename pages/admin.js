@@ -111,8 +111,7 @@ export default function Admin() {
         tage: Object.values(tage),
         monate: Object.values(monate),
        };
-    }  
-   });
+    }
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, newSession) => {
