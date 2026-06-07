@@ -112,7 +112,8 @@ export default function Admin() {
         monate: Object.values(monate),
        };
     }
-
+        
+   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, newSession) => {
         setSession(newSession);
