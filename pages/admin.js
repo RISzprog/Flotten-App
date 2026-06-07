@@ -306,7 +306,14 @@ export default function Admin() {
         </header>
 
         {meldung && <div className="info">{meldung}</div>}
-
+<nav className="tabs">
+  <button onClick={() => setBereich("uebersicht")}>Übersicht</button>
+  <button onClick={() => setBereich("stunden")}>Stunden</button>
+  <button onClick={() => setBereich("historie")}>Historie</button>
+  <button onClick={() => setBereich("mitarbeiter")}>Mitarbeiter</button>
+  <button onClick={() => setBereich("fahrzeuge")}>Fahrzeuge</button>
+</nav>
+           {bereich === "uebersicht" && (
         <section className="statsGrid">
           <div className="statCard">
             <span>Aktive Fahrzeuge</span>
@@ -330,6 +337,7 @@ export default function Admin() {
           <h2>Live-Karte</h2>
           <LiveMap zeiten={aktiveZeiten || []} />
         </section>
+      )}
 
         <section className="card">
           <h2>Fahrer-Stundenübersicht</h2>
