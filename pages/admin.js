@@ -465,8 +465,6 @@ export default function Admin() {
             <strong>{mitarbeiter.length}</strong>
           </div>
         </section>
-  
-</section>
 
 <section className="box">
   <button
