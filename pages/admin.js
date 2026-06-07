@@ -86,15 +86,23 @@ export default function Admin() {
   async function login() {
     setMeldung("");
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+   const { data, error } = await supabase.auth.signInWithPassword({
+       email,
+       password,
+     });
 
-    if (error) {
-      setMeldung("Login fehlgeschlagen");
-    }
-  }
+   if (error) {
+     setMeldung("Login fehlgeschlagen: " + error.message);
+     return;
+   }
+
+   setSession(data.session);
+
+   if (data.session) {
+    await ladeRolle(data.session.user.email);
+    await allesLaden();
+   }
+ }
 
   async function logout() {
     await supabase.auth.signOut();
