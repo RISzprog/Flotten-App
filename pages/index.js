@@ -497,9 +497,13 @@ if (mitarbeiterAktiv) {
            }
 
           .flash {
-             box-shadow: 0 0 30px rgba(255,255,255,1);
-             transform: scale(1.03);
-           }
+            box-shadow:
+              0 0 25px rgba(255,255,255,1),
+              0 0 50px rgba(255,255,255,0.95),
+              0 0 80px rgba(255,255,255,0.9);
+            transform: scale(1.08);
+          }
+          
       `}</style> 
     </div>
   );
