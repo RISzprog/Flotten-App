@@ -520,7 +520,7 @@ export default function Admin() {
     </div>
   )}
 </section>
-    
+     
         <div className="filters">
           <input
             placeholder="Suche Mitarbeiter/Beifahrer/Fahrzeug/Kennzeichen"
