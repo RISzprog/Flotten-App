@@ -52,6 +52,16 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const gespeicherterMitarbeiter =
+    localStorage.getItem("ris_mitarbeiter");
+
+    if (gespeicherterMitarbeiter) {
+      setMitarbeiter(gespeicherterMitarbeiter);
+      setMitarbeiterSuche(gespeicherterMitarbeiter);
+    }
+  }, []);
+
+  useEffect(() => {
     if (!router.isReady || fahrzeuge.length === 0) return;
 
     const qr = router.query.fahrzeug;
@@ -116,6 +126,7 @@ export default function Home() {
     const name = `${m.vorname} ${m.nachname}`;
     setMitarbeiter(name);
     setMitarbeiterSuche(name);
+    localStorage.setItem("ris_mitarbeiter", name);
   }
 
   async function abholen() {
