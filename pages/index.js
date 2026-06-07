@@ -193,12 +193,12 @@ if (mitarbeiterAktiv) {
     }
 
     const { error } = await supabase
-      .from("zeiten")
-      .update({
-        endzeit: new Date().toISOString(),
-        status: "ausgestempelt",
-        latitude: gps?.latitude || data[0].latitude,
-        longitude: gps?.longitude || data[0].longitude
+     .from("zeiten")
+     .update({
+       endzeit: new Date().toISOString(),
+       status: "ausgestempelt",
+       latitude: data[0].latitude,
+       longitude: data[0].longitude
       })
       .eq("id", data[0].id);
 
