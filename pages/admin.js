@@ -434,6 +434,10 @@ export default function Admin() {
   Aktualisieren
 </button>
 
+<button className="logout" onClick={allesLaden}>
+  Aktualisieren
+</button>
+
 <button className="logout" onClick={logout}>
   Logout
 </button>
