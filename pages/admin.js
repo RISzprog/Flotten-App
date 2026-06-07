@@ -5,7 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 const LiveMap = dynamic(() => import("../components/LiveMap"), { ssr: false });
 
 const supabase = createClient(
-  "https://rbbhijcxbemebynfrpiz.supabase.co",
+  "https://rbhbijcxbemebynfrpiz.supabase.co",
   "sb_publishable_URHTzamjcI6_j1dt0uTIlQ_GezlUHTw",
   {
     auth: {
