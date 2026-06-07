@@ -71,8 +71,48 @@ export default function Admin() {
       if (data.session) {
         ladeRolle(data.session.user.email);
         allesLaden();
-      }
-    });
+
+      function berechneFahrerStunden() {
+        const tage = {};
+        const monate = {};
+
+        zeiten
+         .filter((z) => z.mitarbeiter && z.startzeit && z.endzeit)
+         .forEach((z) => {
+           const start = new Date(z.startzeit);
+           const ende = new Date(z.endzeit);
+           const stunden = (ende - start) / 1000 / 60 / 60;
+
+           if (stunden <= 0) return;
+
+           const tag = start.toLocaleDateString("de-DE");
+           const monat = start.toLocaleDateString("de-DE", {
+            month: "2-digit",
+            year: "numeric",
+           });
+
+           const tagKey = `${z.mitarbeiter}-${tag}`;
+           const monatKey = `${z.mitarbeiter}-${monat}`;
+
+           tage[tagKey] = {
+             mitarbeiter: z.mitarbeiter,
+             tag,
+             stunden: (tage[tagKey]?.stunden || 0) + stunden,
+           };
+
+           monate[monatKey] = {
+             mitarbeiter: z.mitarbeiter,
+             monat,
+             stunden: (monate[monatKey]?.stunden || 0) + stunden,
+           };
+         });
+
+       return {
+        tage: Object.values(tage),
+        monate: Object.values(monate),
+       };
+    }  
+   });
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, newSession) => {
@@ -283,6 +323,8 @@ export default function Admin() {
     return new Date(z.startzeit).toISOString().slice(0, 10) === heute;
   });
 
+  const fahrerStunden = berechneFahrerStunden();
+  
   if (!session) {
     return (
       <div className="page loginPage">
@@ -417,6 +459,50 @@ export default function Admin() {
             <strong>{mitarbeiter.length}</strong>
           </div>
         </section>
+
+    <section className="card">
+      <h2>Fahrer-Stundenübersicht</h2>
+
+      <h3>Nach Tag</h3>
+       <table>
+        <thead>
+         <tr>
+          <th>Fahrer</th>
+          <th>Tag</th>
+          <th>Stunden</th>
+         </tr>
+        </thead>
+        <tbody>
+          {fahrerStunden.tage.map((e) => (
+            <tr key={`${e.mitarbeiter}-${e.tag}`}>
+              <td>{e.mitarbeiter}</td>
+              <td>{e.tag}</td>
+              <td>{e.stunden.toFixed(2)}</td>
+            </tr>
+          ))}
+        </tbody>
+     </table>
+
+    <h3>Gesamt im Monat</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Fahrer</th>
+          <th>Monat</th>
+          <th>Stunden</th>
+        </tr>
+      </thead>
+     <tbody>
+       {fahrerStunden.monate.map((e) => (
+          <tr key={`${e.mitarbeiter}-${e.monat}`}>
+            <td>{e.mitarbeiter}</td>
+            <td>{e.monat}</td>
+            <td>{e.stunden.toFixed(2)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </section>
 
         <div className="filters">
           <input
