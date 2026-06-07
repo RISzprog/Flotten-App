@@ -387,9 +387,9 @@ export default function Admin() {
             <p>{session.user.email}</p>
           </div>
 
-          <button className="logout" onClick={laden}>
-            Aktualisieren
-          </button>
+         <button className="logout" onClick={allesLaden}>
+           Aktualisieren
+         </button>
   
           <button className="logout" onClick={logout}>
             Logout
