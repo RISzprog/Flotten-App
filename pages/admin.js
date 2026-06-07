@@ -58,6 +58,7 @@ export default function Admin() {
   const [zeigeKarte, setZeigeKarte] = useState(false);
   const [zeigeMitarbeiter, setZeigeMitarbeiter] = useState(false);
   const [zeigeFahrzeuge, setZeigeFahrzeuge] = useState(false);
+  const [zeigeStunden, setZeigeStunden] = useState(false);
 
   const [neuerVorname, setNeuerVorname] = useState("");
   const [neuerNachname, setNeuerNachname] = useState("");
@@ -283,6 +284,48 @@ export default function Admin() {
     return new Date(z.startzeit).toISOString().slice(0, 10) === heute;
   });
 
+  const fahrerStunden = useMemo(() => {
+  const tage = {};
+  const monate = {};
+
+  zeiten
+    .filter((z) => z.mitarbeiter && z.startzeit && z.endzeit)
+    .forEach((z) => {
+      const start = new Date(z.startzeit);
+      const ende = new Date(z.endzeit);
+      const stunden = (ende - start) / 1000 / 60 / 60;
+
+      if (stunden <= 0) return;
+
+      const tag = start.toLocaleDateString("de-DE");
+
+      const monat = start.toLocaleDateString("de-DE", {
+        month: "2-digit",
+        year: "numeric",
+      });
+
+      const tagKey = `${z.mitarbeiter}-${tag}`;
+      const monatKey = `${z.mitarbeiter}-${monat}`;
+
+      tage[tagKey] = {
+        mitarbeiter: z.mitarbeiter,
+        tag,
+        stunden: (tage[tagKey]?.stunden || 0) + stunden,
+      };
+
+      monate[monatKey] = {
+        mitarbeiter: z.mitarbeiter,
+        monat,
+        stunden: (monate[monatKey]?.stunden || 0) + stunden,
+      };
+    });
+
+  return {
+    tage: Object.values(tage),
+    monate: Object.values(monate),
+  };
+}, [zeiten]);
+  
   if (!session) {
     return (
       <div className="page loginPage">
@@ -386,9 +429,15 @@ export default function Admin() {
             <h1>RIS Admin</h1>
             <p>{session.user.email}</p>
           </div>
-          <button className="logout" onClick={logout}>
-            Logout
-          </button>
+  
+          <button className="logout" onClick={allesLaden}>
+  Aktualisieren
+</button>
+
+<button className="logout" onClick={logout}>
+  Logout
+</button>
+  
         </header>
 
         <section className="statsGrid">
