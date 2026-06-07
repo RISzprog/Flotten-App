@@ -37,6 +37,7 @@ export default function Admin() {
   const [suche, setSuche] = useState("");
   const [fahrzeugFilter, setFahrzeugFilter] = useState("");
   const [meldung, setMeldung] = useState("");
+  const [bereich, setBereich] = useState("uebersicht");
 
   useEffect(() => {
     async function start() {
