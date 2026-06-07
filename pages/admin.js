@@ -460,50 +460,6 @@ export default function Admin() {
           </div>
         </section>
 
-    <section className="card">
-      <h2>Fahrer-Stundenübersicht</h2>
-
-      <h3>Nach Tag</h3>
-       <table>
-        <thead>
-         <tr>
-          <th>Fahrer</th>
-          <th>Tag</th>
-          <th>Stunden</th>
-         </tr>
-        </thead>
-        <tbody>
-          {fahrerStunden.tage.map((e) => (
-            <tr key={`${e.mitarbeiter}-${e.tag}`}>
-              <td>{e.mitarbeiter}</td>
-              <td>{e.tag}</td>
-              <td>{e.stunden.toFixed(2)}</td>
-            </tr>
-          ))}
-        </tbody>
-     </table>
-
-    <h3>Gesamt im Monat</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Fahrer</th>
-          <th>Monat</th>
-          <th>Stunden</th>
-        </tr>
-      </thead>
-     <tbody>
-       {fahrerStunden.monate.map((e) => (
-          <tr key={`${e.mitarbeiter}-${e.monat}`}>
-            <td>{e.mitarbeiter}</td>
-            <td>{e.monat}</td>
-            <td>{e.stunden.toFixed(2)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </section>
-
         <div className="filters">
           <input
             placeholder="Suche Mitarbeiter/Beifahrer/Fahrzeug/Kennzeichen"
