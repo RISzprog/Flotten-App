@@ -332,12 +332,12 @@ export default function Admin() {
             <strong>{mitarbeiter.length}</strong>
           </div>
         </section>
+      )}
 
         <section className="card">
           <h2>Live-Karte</h2>
           <LiveMap zeiten={aktiveZeiten || []} />
         </section>
-      )}
 
         <section className="card">
           <h2>Fahrer-Stundenübersicht</h2>
