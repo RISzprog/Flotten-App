@@ -6,7 +6,7 @@ const LiveMap = dynamic(() => import("../components/LiveMap"), { ssr: false });
 
 const supabase = createClient(
   "https://rbhbijcxbemebynfrpiz.supabase.co",
-  "sb_publishable_URHTzamjcI6_j1dt0uTIlQ_GezlUHTw",
+  sb_publishable_URHTzamjcI6_j1dt0uTTlQ_GezlUHTw,
   {
     auth: {
       persistSession: true,
