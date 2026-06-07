@@ -434,10 +434,6 @@ export default function Admin() {
   Aktualisieren
 </button>
 
-<button className="logout" onClick={allesLaden}>
-  Aktualisieren
-</button>
-
 <button className="logout" onClick={logout}>
   Logout
 </button>
@@ -466,61 +462,6 @@ export default function Admin() {
           </div>
         </section>
 
-<section className="box">
-  <button
-    className="toggleTitle"
-    onClick={() => setZeigeStunden(!zeigeStunden)}
-  >
-    {zeigeStunden ? "▼" : "▶"} Fahrer-Stundenübersicht
-  </button>
-
-  {zeigeStunden && (
-    <div className="tableWrap">
-      <h3>Tagesgesamt pro Fahrer</h3>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Fahrer</th>
-            <th>Tag</th>
-            <th>Stunden gesamt</th>
-          </tr>
-        </thead>
-        <tbody>
-          {fahrerStunden.tage.map((e) => (
-            <tr key={`${e.mitarbeiter}-${e.tag}`}>
-              <td>{e.mitarbeiter}</td>
-              <td>{e.tag}</td>
-              <td>{e.stunden.toFixed(2)} Std.</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <h3>Monatsgesamt pro Fahrer</h3>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Fahrer</th>
-            <th>Monat</th>
-            <th>Stunden gesamt</th>
-          </tr>
-        </thead>
-        <tbody>
-          {fahrerStunden.monate.map((e) => (
-            <tr key={`${e.mitarbeiter}-${e.monat}`}>
-              <td>{e.mitarbeiter}</td>
-              <td>{e.monat}</td>
-              <td>{e.stunden.toFixed(2)} Std.</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )}
-</section>
-     
         <div className="filters">
           <input
             placeholder="Suche Mitarbeiter/Beifahrer/Fahrzeug/Kennzeichen"
