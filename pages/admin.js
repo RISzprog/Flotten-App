@@ -386,6 +386,11 @@ export default function Admin() {
             <h1>RIS Admin</h1>
             <p>{session.user.email}</p>
           </div>
+
+          <button className="logout" onClick={laden}>
+            Aktualisieren
+          </button>
+  
           <button className="logout" onClick={logout}>
             Logout
           </button>
