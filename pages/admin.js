@@ -78,21 +78,25 @@ export default function Admin() {
   }, []);
 
   async function login() {
-    setMeldung("");
+     setMeldung("Login läuft...");
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+     const { data, error } = await supabase.auth.signInWithPassword({
+       email: email.trim(),
+       password: password.trim(),
+     });
 
-    if (error) {
-      setMeldung("Login fehlgeschlagen: " + error.message);
-      return;
-    }
+     console.log("LOGIN DATA:", data);
+     console.log("LOGIN ERROR:", error);
 
-    setSession(data.session);
-    await allesLaden();
-  }
+     if (error) {
+        setMeldung("Login fehlgeschlagen: " + error.message);
+        return;
+     }
+
+  setSession(data.session);
+  setMeldung("");
+  await allesLaden();
+}
 
   async function logout() {
     await supabase.auth.signOut();
