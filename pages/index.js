@@ -180,7 +180,7 @@ if (mitarbeiterAktiv) {
       return;
     }
 
-    setMeldung("🟢 Abgeholt");
+    setMeldung("🟢 Erfolgreich abgeholt");
   }
 
   async function abgeben() {
