@@ -16,18 +16,17 @@ const supabase = createClient(
   }
 );
 
-function formatDatum(value) {
+function zeit(value) {
   if (!value) return "-";
   return new Date(value).toLocaleString("de-DE");
 }
 
-function formatStunden(value) {
+function stunden(value) {
   return `${Number(value || 0).toFixed(2)} Std.`;
 }
 
 export default function Admin() {
   const [session, setSession] = useState(null);
-  const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -35,9 +34,9 @@ export default function Admin() {
   const [fahrzeuge, setFahrzeuge] = useState([]);
   const [mitarbeiter, setMitarbeiter] = useState([]);
 
-  const [meldung, setMeldung] = useState("");
   const [suche, setSuche] = useState("");
   const [fahrzeugFilter, setFahrzeugFilter] = useState("");
+  const [meldung, setMeldung] = useState("");
 
   useEffect(() => {
     async function start() {
@@ -45,21 +44,16 @@ export default function Admin() {
       setSession(data.session);
 
       if (data.session) {
-        await ladeRolle(data.session.user.email);
         await allesLaden();
       }
     }
 
     start();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
+    const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, newSession) => {
         setSession(newSession);
-
-        if (newSession) {
-          await ladeRolle(newSession.user.email);
-          await allesLaden();
-        }
+        if (newSession) await allesLaden();
       }
     );
 
@@ -77,7 +71,7 @@ export default function Admin() {
     }, 10000);
 
     return () => {
-      listener?.subscription?.unsubscribe();
+      authListener?.subscription?.unsubscribe();
       supabase.removeChannel(channel);
       clearInterval(interval);
     };
@@ -86,46 +80,30 @@ export default function Admin() {
   async function login() {
     setMeldung("");
 
-   const { data, error } = await supabase.auth.signInWithPassword({
-       email,
-       password,
-     });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-   if (error) {
-     setMeldung("Login fehlgeschlagen: " + error.message);
-     return;
-   }
+    if (error) {
+      setMeldung("Login fehlgeschlagen: " + error.message);
+      return;
+    }
 
-   setSession(data.session);
-
-   if (data.session) {
-    await ladeRolle(data.session.user.email);
+    setSession(data.session);
     await allesLaden();
-   }
- }
+  }
 
   async function logout() {
     await supabase.auth.signOut();
     setSession(null);
-    setRole("");
-  }
-
-  async function ladeRolle(userEmail) {
-    const { data, error } = await supabase
-      .from("user_roles")
-      .select("rolle")
-      .eq("email", userEmail)
-      .single();
-
-    if (!error && data) {
-      setRole(data.rolle);
-    }
   }
 
   async function allesLaden() {
     await laden();
     await fahrzeugeLaden();
     await mitarbeiterLaden();
+    setMeldung("Daten aktualisiert");
   }
 
   async function laden() {
@@ -134,9 +112,7 @@ export default function Admin() {
       .select("*")
       .order("startzeit", { ascending: false });
 
-    if (!error) {
-      setZeiten(data || []);
-    }
+    if (!error) setZeiten(data || []);
   }
 
   async function fahrzeugeLaden() {
@@ -145,9 +121,7 @@ export default function Admin() {
       .select("*")
       .order("name", { ascending: true });
 
-    if (!error) {
-      setFahrzeuge(data || []);
-    }
+    if (!error) setFahrzeuge(data || []);
   }
 
   async function mitarbeiterLaden() {
@@ -156,18 +130,15 @@ export default function Admin() {
       .select("*")
       .order("name", { ascending: true });
 
-    if (!error) {
-      setMitarbeiter(data || []);
-    }
+    if (!error) setMitarbeiter(data || []);
   }
 
   const aktiveZeiten = useMemo(() => {
     return zeiten.filter((z) => z.status === "eingestempelt");
   }, [zeiten]);
 
-  const gesamtHeute = useMemo(() => {
+  const fahrtenHeute = useMemo(() => {
     const heute = new Date().toISOString().slice(0, 10);
-
     return zeiten.filter((z) => {
       if (!z.startzeit) return false;
       return new Date(z.startzeit).toISOString().slice(0, 10) === heute;
@@ -183,9 +154,9 @@ export default function Admin() {
       .forEach((z) => {
         const start = new Date(z.startzeit);
         const ende = new Date(z.endzeit);
-        const stunden = (ende - start) / 1000 / 60 / 60;
+        const diff = (ende - start) / 1000 / 60 / 60;
 
-        if (stunden <= 0) return;
+        if (diff <= 0) return;
 
         const tag = start.toLocaleDateString("de-DE");
         const monat = start.toLocaleDateString("de-DE", {
@@ -199,13 +170,13 @@ export default function Admin() {
         tage[tagKey] = {
           mitarbeiter: z.mitarbeiter,
           tag,
-          stunden: (tage[tagKey]?.stunden || 0) + stunden,
+          stunden: (tage[tagKey]?.stunden || 0) + diff,
         };
 
         monate[monatKey] = {
           mitarbeiter: z.mitarbeiter,
           monat,
-          stunden: (monate[monatKey]?.stunden || 0) + stunden,
+          stunden: (monate[monatKey]?.stunden || 0) + diff,
         };
       });
 
@@ -225,10 +196,10 @@ export default function Admin() {
         z.fahrzeug || ""
       } ${z.kennzeichen || ""}`.toLowerCase();
 
-      const passtSuche = text.includes(suche.toLowerCase());
-      const passtFahrzeug = !fahrzeugFilter || z.fahrzeug === fahrzeugFilter;
-
-      return passtSuche && passtFahrzeug;
+      return (
+        text.includes(suche.toLowerCase()) &&
+        (!fahrzeugFilter || z.fahrzeug === fahrzeugFilter)
+      );
     });
   }, [zeiten, suche, fahrzeugFilter]);
 
@@ -254,7 +225,6 @@ export default function Admin() {
           />
 
           <button onClick={login}>Einloggen</button>
-
           {meldung && <p className="meldung">{meldung}</p>}
         </div>
 
@@ -267,18 +237,17 @@ export default function Admin() {
 
           .loginPage {
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             padding: 24px;
           }
 
           .loginBox {
             background: white;
-            width: 100%;
-            max-width: 380px;
             padding: 28px;
             border-radius: 18px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            max-width: 380px;
+            width: 100%;
           }
 
           .logo {
@@ -303,69 +272,11 @@ export default function Admin() {
             color: white;
             border: none;
             font-weight: bold;
-            cursor: pointer;
           }
 
           .meldung {
             margin-top: 12px;
-            color: #b91c1c;
             font-weight: bold;
-          }
-        `}</style>
-      </div>
-    );
-  }
-
-  if (role && role !== "admin") {
-    return (
-      <div className="page loginPage">
-        <div className="loginBox">
-          <div className="logo">RIS</div>
-          <h1>Kein Zugriff</h1>
-          <p>Du bist nicht als Admin freigeschaltet.</p>
-          <button onClick={logout}>Logout</button>
-        </div>
-
-        <style jsx>{`
-          .page {
-            min-height: 100vh;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(90deg, #2f5fb3, #f97316);
-          }
-
-          .loginPage {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 24px;
-          }
-
-          .loginBox {
-            background: white;
-            width: 100%;
-            max-width: 380px;
-            padding: 28px;
-            border-radius: 18px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-          }
-
-          .logo {
-            font-size: 36px;
-            font-weight: bold;
-            color: #f97316;
-            margin-bottom: 10px;
-          }
-
-          button {
-            width: 100%;
-            padding: 12px;
-            margin-top: 10px;
-            border-radius: 10px;
-            border: none;
-            background: #f97316;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
           }
         `}</style>
       </div>
@@ -390,22 +301,21 @@ export default function Admin() {
           </div>
         </header>
 
+        {meldung && <div className="info">{meldung}</div>}
+
         <section className="statsGrid">
           <div className="statCard">
             <span>Aktive Fahrzeuge</span>
             <strong>{aktiveZeiten.length}</strong>
           </div>
-
           <div className="statCard">
             <span>Fahrten heute</span>
-            <strong>{gesamtHeute.length}</strong>
+            <strong>{fahrtenHeute.length}</strong>
           </div>
-
           <div className="statCard">
             <span>Fahrzeuge gesamt</span>
             <strong>{fahrzeuge.length}</strong>
           </div>
-
           <div className="statCard">
             <span>Mitarbeiter gesamt</span>
             <strong>{mitarbeiter.length}</strong>
@@ -434,7 +344,7 @@ export default function Admin() {
                 <tr key={`${e.mitarbeiter}-${e.tag}`}>
                   <td>{e.mitarbeiter}</td>
                   <td>{e.tag}</td>
-                  <td>{formatStunden(e.stunden)}</td>
+                  <td>{stunden(e.stunden)}</td>
                 </tr>
               ))}
             </tbody>
@@ -454,7 +364,7 @@ export default function Admin() {
                 <tr key={`${e.mitarbeiter}-${e.monat}`}>
                   <td>{e.mitarbeiter}</td>
                   <td>{e.monat}</td>
-                  <td>{formatStunden(e.stunden)}</td>
+                  <td>{stunden(e.stunden)}</td>
                 </tr>
               ))}
             </tbody>
@@ -463,7 +373,6 @@ export default function Admin() {
 
         <section className="card">
           <h2>Filter</h2>
-
           <div className="filters">
             <input
               placeholder="Suche Mitarbeiter/Beifahrer/Fahrzeug/Kennzeichen"
@@ -487,7 +396,6 @@ export default function Admin() {
 
         <section className="card">
           <h2>Fahrten-Historie</h2>
-
           <table>
             <thead>
               <tr>
@@ -505,8 +413,8 @@ export default function Admin() {
                   <td>{z.mitarbeiter || "-"}</td>
                   <td>{z.beifahrer || "-"}</td>
                   <td>{z.fahrzeug || "-"}</td>
-                  <td>{formatDatum(z.startzeit)}</td>
-                  <td>{formatDatum(z.endzeit)}</td>
+                  <td>{zeit(z.startzeit)}</td>
+                  <td>{zeit(z.endzeit)}</td>
                   <td>{z.status || "-"}</td>
                 </tr>
               ))}
@@ -516,13 +424,8 @@ export default function Admin() {
 
         <section className="grid2">
           <div className="card">
-            <h2>Mitarbeiterverwaltung</h2>
+            <h2>Mitarbeiter</h2>
             <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                </tr>
-              </thead>
               <tbody>
                 {mitarbeiter.map((m) => (
                   <tr key={m.id || m.name}>
@@ -534,7 +437,7 @@ export default function Admin() {
           </div>
 
           <div className="card">
-            <h2>Fahrzeugverwaltung</h2>
+            <h2>Fahrzeuge</h2>
             <table>
               <thead>
                 <tr>
@@ -568,21 +471,26 @@ export default function Admin() {
           margin: 0 auto;
         }
 
-        header {
+        header,
+        .card,
+        .statCard,
+        .info {
           background: white;
           border-radius: 18px;
-          padding: 18px;
+          padding: 16px;
+          margin-bottom: 18px;
+        }
+
+        header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 18px;
-          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
 
         .brand {
           display: flex;
-          align-items: center;
           gap: 14px;
+          align-items: center;
         }
 
         .logo {
@@ -625,15 +533,6 @@ export default function Admin() {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
           gap: 14px;
-          margin-bottom: 18px;
-        }
-
-        .statCard,
-        .card {
-          background: white;
-          border-radius: 18px;
-          padding: 16px;
-          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
 
         .statCard span {
@@ -644,11 +543,6 @@ export default function Admin() {
 
         .statCard strong {
           font-size: 30px;
-        }
-
-        .card {
-          margin-bottom: 18px;
-          overflow-x: auto;
         }
 
         .filters {
@@ -681,13 +575,16 @@ export default function Admin() {
 
         th {
           background: #f3f4f6;
-          font-weight: bold;
         }
 
         .grid2 {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 18px;
+        }
+
+        .card {
+          overflow-x: auto;
         }
 
         @media (max-width: 900px) {
@@ -701,14 +598,6 @@ export default function Admin() {
             flex-direction: column;
             align-items: flex-start;
             gap: 14px;
-          }
-
-          .headerBtns {
-            width: 100%;
-          }
-
-          .headerBtns button {
-            flex: 1;
           }
         }
       `}</style>
