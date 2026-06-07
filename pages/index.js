@@ -148,16 +148,6 @@ if (mitarbeiterAktiv) {
   return;
 }
 
-    const { data: offene } = await supabase
-      .from("zeiten")
-      .select("*")
-      .eq("status", "eingestempelt");
-
-    if (offene && offene.some((e) => e.mitarbeiter === mitarbeiter)) {
-      setMeldung("🚫 Mitarbeiter hat bereits ein Fahrzeug");
-      return;
-    }
-
     if (offene && offene.some((e) => e.fahrzeug === fahrzeug)) {
       setMeldung("🚫 Fahrzeug bereits unterwegs");
       return;
