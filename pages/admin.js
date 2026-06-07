@@ -520,8 +520,6 @@ export default function Admin() {
     </div>
   )}
 </section>
-
-<div className="filters">
     
         <div className="filters">
           <input
