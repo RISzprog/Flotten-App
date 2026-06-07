@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   "https://rbhbijcxbemebynfrpiz.supabase.co",
- sb_publishable_URHTzamjcI6_j1dt0uTTlQ_GezlUHTw,
+  "sb_publishable_URHTzamjcI6_j1dt0uTTlQ_GezlUHTw,
   {
     auth: {
       persistSession: true,
