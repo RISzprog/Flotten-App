@@ -148,11 +148,6 @@ if (mitarbeiterAktiv) {
   return;
 }
 
-    if (offene && offene.some((e) => e.fahrzeug === fahrzeug)) {
-      setMeldung("🚫 Fahrzeug bereits unterwegs");
-      return;
-    }
-
     const { error } = await supabase.from("zeiten").insert([
       {
         mitarbeiter,
