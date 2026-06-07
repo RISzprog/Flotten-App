@@ -328,7 +328,7 @@ export default function Admin() {
 
         <section className="card">
           <h2>Live-Karte</h2>
-          <LiveMap daten={aktiveZeiten} />
+          <LiveMap zeiten={aktiveZeiten || []} />
         </section>
 
         <section className="card">
